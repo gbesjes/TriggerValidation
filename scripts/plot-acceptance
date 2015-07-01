@@ -148,6 +148,6 @@ if h_acceptance is not None:
     h_acceptance.yaxis.SetRangeUser(0, 1.1)
     h_acceptance.linewidth = 2
     h_acceptance.LabelsOption('v')
-    c.SetBottomMargin(0.4)
+    c.SetBottomMargin(0.5)
     h_acceptance.Draw('HIST')
     c.SaveAs('counts_acceptance.png')
