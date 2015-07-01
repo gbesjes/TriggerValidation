@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+import os
+import re
+import logging; logging.basicConfig(level=logging.DEBUG)
+from argparse import ArgumentParser
+
+import ROOT; ROOT.gROOT.SetBatch(True)
+from rootpy.io import root_open
+from rootpy.plotting import Canvas, Hist, Legend
+from rootpy.plotting.style import set_style
+
+log = logging.getLogger(os.path.basename(__file__))
+
+
+parser = ArgumentParser(os.path.basename(__file__))
+parser.add_argument('file', type=str, help='Name of the ROOT holding histogram and efficiency curves')
+args = parser.parse_args()
+
+
+EFF_PATTERN = re.compile(
+    '^(?P<var>\w+)'
+    '_HLT_'
+    '(?P<trigger>\w+)_'
+    '(?P<step>final|nodr|nopt)?$')
+
+TRIGGERS = {
+    'tau35_tight1_tracktwo_tau25_tight1_tracktwo': {
+        'title': '2 tight taus, HLT p_{T} > 35, 25', 
+        'color': 'blue', 
+        'marker': 'square', 
+        'line': 'solid'},
+    'tau35_medium1_tracktwo_tau25_medium1_tracktwo': {
+        'title': '2 medium taus, HLT p_{T} > 35, 25',
+        'color': 'red',
+        'marker': 'square',
+        'line': 'solid'},
+    'tau35_loose1_tracktwo_tau25_loose1_tracktwo': {
+        'title': '2 loose taus, HLT p_{T} > 35, 25',
+        'color': 'green',
+        'marker': 'square',
+        'line': 'solid',},
+    'tau35_medium1_tracktwo_tau25_medium1_tracktwo_L1TAU20IM_2TAU12IM': {
+        'title': '2 medium taus, HLT p_{T} > 35, 25, L1 iso',
+        'color': 'red',
+        'marker': 'dot',
+        'line': 'dashed',},
+    'tau35_loose1_tracktwo_tau25_loose1_tracktwo_L1TAU20IM_2TAU12IM': {
+        'title': '2 loose taus, HLT p_{T} > 35, 25, L1 iso',
+        'color': 'green',
+        'marker': 'dot',
+        'line': 'dashed',},
+    'tau35_perf_ptonly_tau25_perf_ptonly_L1TAU20IM_2TAU12IM': {
+        'title': '2 taus, no id, no tracking, HLT p_{T} > 35, 25, L1 iso',
+        'color': 'black',
+        'marker': 'triangle',
+        'line': 'solid'}
+    }
+
+VARIABLES = {
+    'lead_tau_pt': '#tau_{1} p_{T} [GeV]',
+    'lead_tau_eta': '#tau_{1} #eta',
+    'lead_tau_ntracks': '#tau_{1} Ntracks',
+    'sublead_tau_pt': '#tau_{2} p_{T} [GeV]',
+    'sublead_tau_eta': '#tau_{2} #eta',
+    'sublead_tau_ntracks': '#tau_{2} Ntracks',
+    'jet_pt': 'Leading jet p_{T} [GeV]',
+    'jet_eta': 'Leading jet #eta',
+    'delta_r': '#Delta R(#tau_{1}, #tau_{2})'
+    }
+
+efficiencies = {}
+variables = []
+triggers = []
+steps = []
+h_acceptance = None
+file = root_open(args.file)
+for _, _, objs in file.walk():
+    for obj_name in objs:
+        obj = file[obj_name]
+        if isinstance(obj, ROOT.TEfficiency):
+            match = re.match(EFF_PATTERN, obj_name)
+            if match:
+                efficiencies[obj_name] = {
+                    'var': match.group('var'),
+                    'trigger': match.group('trigger'),
+                    'step': match.group('step'),
+                    'eff': obj,}
+                if match.group('var') not in variables:
+                    variables.append(match.group('var'))
+                if match.group('trigger') not in triggers:
+                    triggers.append(match.group('trigger'))
+                if match.group('step') not in steps:
+                    steps.append(match.group('step'))
+        elif isinstance(obj, ROOT.TH1F):
+            h_acceptance = obj
+        else:
+            log.info(obj.__class__.__bases__)
+
+log.info(h_acceptance)                
+
+def filtered_efficiencies(
+    var='lead_tau_pt',
+    trigger=None,
+    step='final'):
+    def filter_func(x, var, trig, step):
+        if var is not None and x[1]['var'] != var:
+            return False
+        if trig is not None and x[1]['trigger'] != trig:
+            return False
+        if step is not None and x[1]['step'] != step:
+            return False
+        return True
+    return dict(filter(
+            lambda x: filter_func(x, var, trigger, step), 
+            efficiencies.items()))
+
+set_style('ATLAS', shape='rect')
+for var in variables:
+    c = Canvas()
+    effs_dict = filtered_efficiencies(var)
+    effs = []
+    for _, v in effs_dict.items():
+        eff = v['eff']
+        eff.title = TRIGGERS[v['trigger']]['title']
+        eff.legendstyle = 'lp'
+        eff.painted_graph.xaxis.title = VARIABLES[var]
+        eff.painted_graph.yaxis.title = 'Trigger Efficiency'
+        eff.painted_graph.yaxis.SetRangeUser(0, 1)
+        eff.color = TRIGGERS[v['trigger']]['color']
+        eff.markerstyle = TRIGGERS[v['trigger']]['marker']
+        eff.linestyle = TRIGGERS[v['trigger']]['line']
+        effs.append(eff)
+
+    effs[0].painted_graph.Draw('AP')
+    for eff in effs:
+        eff.painted_graph.Draw('samePE')
+    leg = Legend(effs, textsize=20, leftmargin=0.05, topmargin=0.35, rightmargin=0.5)
+    leg.Draw()
+    c.SaveAs(v['var'] + '.png')
+
+if h_acceptance is not None:
+    log.info(h_acceptance)
+    c = Canvas()
+    h_acceptance.Scale(1. / h_acceptance[1].value )
+    h_acceptance.color = 'blue'
+    h_acceptance.yaxis.title = 'Trigger Efficiency'
+    h_acceptance.xaxis.SetLabelSize(h_acceptance.xaxis.GetLabelSize() * 0.8)
+    h_acceptance.yaxis.SetRangeUser(0, 1.1)
+    h_acceptance.linewidth = 2
+    h_acceptance.LabelsOption('v')
+    c.SetBottomMargin(0.4)
+    h_acceptance.Draw('HIST')
+    c.SaveAs('counts_acceptance.png')

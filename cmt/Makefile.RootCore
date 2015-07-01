@@ -34,7 +34,7 @@ PACKAGE_DEP          = AsgTools PATInterfaces PATCore xAODBase xAODEventInfo xAO
 PACKAGE_TRYDEP       = 
 
 # list pattern of scripts to link directly into binary path:
-PACKAGE_SCRIPTS      = 
+PACKAGE_SCRIPTS      = scripts/plot-acceptance
 
 # whether to use pedantic compilation:
 PACKAGE_PEDANTIC     = 1
