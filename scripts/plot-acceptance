@@ -25,32 +25,32 @@ EFF_PATTERN = re.compile(
 
 TRIGGERS = {
     'tau35_tight1_tracktwo_tau25_tight1_tracktwo': {
-        'title': '2 tight taus, HLT p_{T} > 35, 25', 
+        'title': '2 tight taus, HLT p_{T} > 35, 25, L1_JET > 25', 
         'color': 'blue', 
         'marker': 'square', 
         'line': 'solid'},
     'tau35_medium1_tracktwo_tau25_medium1_tracktwo': {
-        'title': '2 medium taus, HLT p_{T} > 35, 25',
+        'title': '2 medium taus, HLT p_{T} > 35, 25, L1_JET > 25',
         'color': 'red',
         'marker': 'square',
         'line': 'solid'},
     'tau35_loose1_tracktwo_tau25_loose1_tracktwo': {
-        'title': '2 loose taus, HLT p_{T} > 35, 25',
+        'title': '2 loose taus, HLT p_{T} > 35, 25, L1_JET > 25',
         'color': 'green',
         'marker': 'square',
         'line': 'solid',},
     'tau35_medium1_tracktwo_tau25_medium1_tracktwo_L1TAU20IM_2TAU12IM': {
-        'title': '2 medium taus, HLT p_{T} > 35, 25, L1 iso',
+        'title': '2 medium taus, HLT p_{T} > 35, 25',
         'color': 'red',
         'marker': 'dot',
         'line': 'dashed',},
     'tau35_loose1_tracktwo_tau25_loose1_tracktwo_L1TAU20IM_2TAU12IM': {
-        'title': '2 loose taus, HLT p_{T} > 35, 25, L1 iso',
+        'title': '2 loose taus, HLT p_{T} > 35, 25',
         'color': 'green',
         'marker': 'dot',
         'line': 'dashed',},
     'tau35_perf_ptonly_tau25_perf_ptonly_L1TAU20IM_2TAU12IM': {
-        'title': '2 taus, no id, no tracking, HLT p_{T} > 35, 25, L1 iso',
+        'title': '2 taus, no id, no tracking, HLT p_{T} > 35, 25',
         'color': 'black',
         'marker': 'triangle',
         'line': 'solid'}
@@ -117,7 +117,7 @@ def filtered_efficiencies(
 set_style('ATLAS', shape='rect')
 for var in variables:
     c = Canvas()
-    effs_dict = filtered_efficiencies(var)
+    effs_dict = filtered_efficiencies(var, step='nodr')
     effs = []
     for _, v in effs_dict.items():
         eff = v['eff']
@@ -141,13 +141,14 @@ for var in variables:
 if h_acceptance is not None:
     log.info(h_acceptance)
     c = Canvas()
+    c.SetGridy()
     h_acceptance.Scale(1. / h_acceptance[1].value )
     h_acceptance.color = 'blue'
     h_acceptance.yaxis.title = 'Trigger Efficiency'
-    h_acceptance.xaxis.SetLabelSize(h_acceptance.xaxis.GetLabelSize() * 0.8)
-    h_acceptance.yaxis.SetRangeUser(0, 1.1)
+    h_acceptance.xaxis.SetLabelSize(h_acceptance.xaxis.GetLabelSize() * 0.9)
+    h_acceptance.yaxis.SetRangeUser(0.5, 1.05)
     h_acceptance.linewidth = 2
     h_acceptance.LabelsOption('v')
-    c.SetBottomMargin(0.5)
+    c.SetBottomMargin(0.7)
     h_acceptance.Draw('HIST')
     c.SaveAs('counts_acceptance.png')

@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
       curves_tools_nopt[trig]->fill_hadhad(pass, tau1, tau2, selected_jets->at(0));
     }
     
-    if (tau1->pt() < 40000. or tau2->pt() < 30000. or selected_jets->at(0)->pt() < 50000.)
+    if (tau1->pt() < 40000. or tau2->pt() < 30000. or selected_jets->at(0)->pt() < 60000.)
       continue;
 
     for (auto trig: triggers) {

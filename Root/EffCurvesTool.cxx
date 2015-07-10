@@ -3,18 +3,20 @@
 EffCurvesTool::EffCurvesTool(const std::string & name)
 {
 
-  m_eff["leading_tau_pt"] = new TEfficiency(("lead_tau_pt_" + name).c_str() , "leading_tau", 32, 20, 100);
-  m_eff["leading_tau_eta"] = new TEfficiency(("lead_tau_eta_" + name).c_str() , "leading_tau", 20, -5, 5);
+  m_eff["leading_tau_pt"] = new TEfficiency(("lead_tau_pt_" + name).c_str() , "leading_tau", 16, 20, 100);
+  m_eff["subleading_tau_pt"] = new TEfficiency(("sublead_tau_pt_" + name).c_str() , "subleading_tau", 16, 20, 100);
   m_eff["leading_tau_ntracks"] = new TEfficiency(("lead_tau_ntracks_" + name).c_str() , "leading_tau", 5, 0, 5);
-
-  m_eff["subleading_tau_pt"] = new TEfficiency(("sublead_tau_pt_" + name).c_str() , "subleading_tau", 32, 20, 100);
-  m_eff["subleading_tau_eta"] = new TEfficiency(("sublead_tau_eta_" + name).c_str() , "subleading_tau", 20, -5, 5);
   m_eff["subleading_tau_ntracks"] = new TEfficiency(("sublead_tau_ntracks_" + name).c_str() , "subleading_tau", 5, 0, 5);
 
-  m_eff["jet_pt"] = new TEfficiency(("jet_pt_" + name).c_str() , "leading_jet", 32, 20, 100);
-  m_eff["jet_eta"] = new TEfficiency(("jet_eta_" + name).c_str() , "leading_jet", 20, -5, 5);
+  int Neta = 8;
+  double bins_eta[] = {-2.4, -1.52, -1.37, -0.6, 0, 0.6, 1.37, 1.52, 2.4};
+  m_eff["leading_tau_eta"] = new TEfficiency(("lead_tau_eta_" + name).c_str() , "leading_tau", Neta, bins_eta);
+  m_eff["subleading_tau_eta"] = new TEfficiency(("sublead_tau_eta_" + name).c_str() , "subleading_tau", 20, -5, 5);
 
-  m_eff["delta_r"] = new TEfficiency(("delta_r_" + name).c_str(), "delta_r", 30, 0, 3);
+  m_eff["jet_pt"] = new TEfficiency(("jet_pt_" + name).c_str() , "leading_jet", 16, 20, 100);
+  m_eff["jet_eta"] = new TEfficiency(("jet_eta_" + name).c_str() , "leading_jet", 10, -5, 5);
+
+  m_eff["delta_r"] = new TEfficiency(("delta_r_" + name).c_str(), "delta_r", 15, 0, 3);
 
 }
 
