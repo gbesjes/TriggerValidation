@@ -12,11 +12,6 @@ from rootpy.plotting.style import set_style
 log = logging.getLogger(os.path.basename(__file__))
 
 
-parser = ArgumentParser(os.path.basename(__file__))
-parser.add_argument('file', type=str, help='Name of the ROOT holding histogram and efficiency curves')
-args = parser.parse_args()
-
-
 EFF_PATTERN = re.compile(
     '^(?P<var>\w+)'
     '_HLT_'
@@ -53,7 +48,27 @@ TRIGGERS = {
         'title': '2 taus, no id, no tracking, HLT p_{T} > 35, 25',
         'color': 'black',
         'marker': 'triangle',
-        'line': 'solid'}
+        'line': 'solid'},
+    'tau25_perf_ptonly': {
+        'title': 'no id, no FTk, HLT p_{T} > 25 GeV',
+        'color': 'black',
+        'marker': 'triangle',
+        'line': 'solid'},
+    'tau25_perf_tracktwo': {
+        'title': 'no id, FTk, HLT p_{T} > 25 GeV',
+        'color': 'red',
+        'marker': 'triangle',
+        'line': 'solid'},
+    'tau25_medium1_tracktwo': {
+        'title': 'medium ID, FTk, HLT p_{T} > 25 GeV',
+        'color': 'blue',
+        'marker': 'triangle',
+        'line': 'solid'},
+    'tau25_medium1_ptonly': {
+        'title': 'medium ID, no FTk, HLT p_{T} > 25 GeV',
+        'color': 'green',
+        'marker': 'triangle',
+        'line': 'solid'},
     }
 
 VARIABLES = {
@@ -68,35 +83,36 @@ VARIABLES = {
     'delta_r': '#Delta R(#tau_{1}, #tau_{2})'
     }
 
-efficiencies = {}
-variables = []
-triggers = []
-steps = []
-h_acceptance = None
-file = root_open(args.file)
-for _, _, objs in file.walk():
-    for obj_name in objs:
-        obj = file[obj_name]
-        if isinstance(obj, ROOT.TEfficiency):
-            match = re.match(EFF_PATTERN, obj_name)
-            if match:
-                efficiencies[obj_name] = {
-                    'var': match.group('var'),
-                    'trigger': match.group('trigger'),
-                    'step': match.group('step'),
-                    'eff': obj,}
-                if match.group('var') not in variables:
-                    variables.append(match.group('var'))
-                if match.group('trigger') not in triggers:
-                    triggers.append(match.group('trigger'))
-                if match.group('step') not in steps:
-                    steps.append(match.group('step'))
-        elif isinstance(obj, ROOT.TH1F):
-            h_acceptance = obj
-        else:
-            log.info(obj.__class__.__bases__)
 
-log.info(h_acceptance)                
+def get_plotables(rfile):
+    efficiencies = {}
+    variables = []
+    triggers = []
+    steps = []
+    h_acceptance = None
+    for _, _, objs in rfile.walk():
+        for obj_name in objs:
+            obj = rfile[obj_name]
+            if isinstance(obj, ROOT.TEfficiency):
+                match = re.match(EFF_PATTERN, obj_name)
+                if match:
+                    efficiencies[obj_name] = {
+                        'var': match.group('var'),
+                        'trigger': match.group('trigger'),
+                        'step': match.group('step'),
+                        'eff': obj,}
+                    if match.group('var') not in variables:
+                        variables.append(match.group('var'))
+                    if match.group('trigger') not in triggers:
+                        triggers.append(match.group('trigger'))
+                    if match.group('step') not in steps:
+                        steps.append(match.group('step'))
+            elif isinstance(obj, ROOT.TH1F):
+                h_acceptance = obj
+            else:
+                log.info(obj.__class__.__bases__)
+        log.info(h_acceptance)                
+    return efficiencies, h_acceptance, variables
 
 def filtered_efficiencies(
     var='lead_tau_pt',
@@ -114,41 +130,97 @@ def filtered_efficiencies(
             lambda x: filter_func(x, var, trigger, step), 
             efficiencies.items()))
 
-set_style('ATLAS', shape='rect')
-for var in variables:
-    c = Canvas()
-    effs_dict = filtered_efficiencies(var, step='nodr')
-    effs = []
-    for _, v in effs_dict.items():
-        eff = v['eff']
-        eff.title = TRIGGERS[v['trigger']]['title']
-        eff.legendstyle = 'lp'
-        eff.painted_graph.xaxis.title = VARIABLES[var]
-        eff.painted_graph.yaxis.title = 'Trigger Efficiency'
-        eff.painted_graph.yaxis.SetRangeUser(0, 1)
-        eff.color = TRIGGERS[v['trigger']]['color']
-        eff.markerstyle = TRIGGERS[v['trigger']]['marker']
-        eff.linestyle = TRIGGERS[v['trigger']]['line']
-        effs.append(eff)
+def get_label(file_name):
+    extension = file_name.split('/')[-1].replace('.root', '.png')
+    log.info(extension)
 
-    effs[0].painted_graph.Draw('AP')
-    for eff in effs:
-        eff.painted_graph.Draw('samePE')
-    leg = Legend(effs, textsize=20, leftmargin=0.05, topmargin=0.35, rightmargin=0.5)
-    leg.Draw()
-    c.SaveAs(v['var'] + '.png')
+    if 'VBF' in extension:
+        if 'hadhad' in extension:
+            label = 'VBF H(125) #rightarrow #tau_{h} #tau_{h}'
+        else:
+            label = 'VBF H(125) #rightarrow #tau_{l} #tau_{h}'
+    else:
+        if 'hadhad' in extension:
+            label = 'gg #rightarrow H(125) #rightarrow #tau_{h} #tau_{h}'
+        else:
+            label = 'gg #rightarrow H(125) #rightarrow #tau_{l} #tau_{h}'
+    return label, extension
 
-if h_acceptance is not None:
-    log.info(h_acceptance)
-    c = Canvas()
-    c.SetGridy()
-    h_acceptance.Scale(1. / h_acceptance[1].value )
-    h_acceptance.color = 'blue'
-    h_acceptance.yaxis.title = 'Trigger Efficiency'
-    h_acceptance.xaxis.SetLabelSize(h_acceptance.xaxis.GetLabelSize() * 0.9)
-    h_acceptance.yaxis.SetRangeUser(0.5, 1.05)
-    h_acceptance.linewidth = 2
-    h_acceptance.LabelsOption('v')
-    c.SetBottomMargin(0.7)
-    h_acceptance.Draw('HIST')
-    c.SaveAs('counts_acceptance.png')
+
+if __name__ == '__main__':
+
+    parser = ArgumentParser(os.path.basename(__file__))
+    parser.add_argument(
+        'files', type=str, nargs='*', 
+        help='Name of the ROOT holding histogram and efficiency curves')
+    parser.add_argument(
+        '--step', type=str, default='final', choices=['nopt', 'nodr', 'final'],
+        help='Efficiency plotting step')
+    args = parser.parse_args()
+
+    
+    files = args.files
+    if not isinstance(files, (list, tuple)):
+        files = [files]
+
+    for file in files:
+        with root_open(file) as rfile:
+            efficiencies, h_acceptance, variables = get_plotables(rfile)
+            label, plt_extension = get_label(file)
+            
+            set_style('ATLAS', shape='rect')
+            for var in variables:
+                c = Canvas()
+                effs_dict = filtered_efficiencies(var, step=args.step)
+                effs = []
+                for _, v in effs_dict.items():
+                    eff = v['eff']
+                    eff.title = TRIGGERS[v['trigger']]['title']
+                    eff.legendstyle = 'lp'
+                    eff.painted_graph.xaxis.title = VARIABLES[var]
+                    eff.painted_graph.yaxis.title = 'Trigger Efficiency'
+                    eff.painted_graph.yaxis.SetRangeUser(0, 1)
+                    eff.color = TRIGGERS[v['trigger']]['color']
+                    eff.markerstyle = TRIGGERS[v['trigger']]['marker']
+                    eff.linestyle = TRIGGERS[v['trigger']]['line']
+                    effs.append(eff)
+                    
+                effs[0].painted_graph.Draw('AP')
+                for eff in effs:
+                    eff.painted_graph.Draw('samePE')
+                leg = Legend(
+                    effs, textsize=20, 
+                    leftmargin=0.15, 
+                    topmargin=0.35, 
+                    rightmargin=0.05)
+                leg.Draw()
+                lat = ROOT.TLatex(
+                    c.GetLeftMargin(),
+                    1 - c.GetTopMargin() + 0.015,
+                    label)
+                lat.SetNDC(True)
+                lat.SetTextSize(20)
+                lat.Draw()
+                c.SaveAs(v['var'] + '_' + plt_extension)
+
+            if h_acceptance is not None:
+                log.info(h_acceptance)
+                c = Canvas()
+                c.SetGridy()
+                h_acceptance.Scale(1. / h_acceptance[1].value)
+                h_acceptance.color = 'blue'
+                h_acceptance.yaxis.title = 'Trigger Efficiency'
+                # h_acceptance.xaxis.SetLabelSize(h_acceptance.xaxis.GetLabelSize() * 0.9)
+                h_acceptance.yaxis.SetRangeUser(0.4, 1.05)
+                h_acceptance.linewidth = 2
+                h_acceptance.LabelsOption('v')
+                c.SetBottomMargin(0.7)
+                h_acceptance.Draw('HIST')
+                lat = ROOT.TLatex(
+                    c.GetLeftMargin(),
+                    1 - c.GetTopMargin() + 0.015,
+                    label)
+                lat.SetNDC(True)
+                lat.SetTextSize(20)
+                lat.Draw()
+                c.SaveAs('counts_acceptance_' + plt_extension)

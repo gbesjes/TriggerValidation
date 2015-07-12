@@ -41,7 +41,12 @@ bool EffCurvesTool::fill_hadhad(bool pass, const xAOD::TauJet * t1, const xAOD::
 }
 
 
-bool EffCurvesTool::fill_lephad(bool pass, const xAOD::IParticle * t1, const xAOD::TauJet * t2, const xAOD::Jet * j1)
+bool EffCurvesTool::fill_lephad(bool pass, const xAOD::TauJet * t1)
 {
+
+  m_eff["leading_tau_pt"]->Fill(pass, t1->pt() / 1000.);
+  m_eff["leading_tau_eta"]->Fill(pass, t1->eta());
+  m_eff["leading_tau_ntracks"]->Fill(pass, t1->nTracks());
+
   return true;
 }

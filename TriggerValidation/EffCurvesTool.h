@@ -19,7 +19,7 @@ class EffCurvesTool
 
   bool fill_hadhad(bool pass, const xAOD::TauJet * t1, const xAOD::TauJet * t2, const xAOD::Jet * j1);
 
-  bool fill_lephad(bool pass, const xAOD::IParticle * t1, const xAOD::TauJet * t2, const xAOD::Jet * j1);
+  bool fill_lephad(bool pass, const xAOD::TauJet * t1);
 
   std::map<std::string, TEfficiency*> Efficiencies () {return m_eff;}
  private:

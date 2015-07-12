@@ -99,12 +99,12 @@ int main(int argc, char **argv) {
   // Muon Selector Tool
   CP::MuonSelectionTool muonSelector("muonSelector");
   CHECK(muonSelector.setProperty("MaxEta", 2.5));
-  CHECK(muonSelector.setProperty("MuQuality", xAOD::Muon::Quality::Loose));
+  // CHECK(muonSelector.setProperty("MuQuality", xAOD::Muon::Quality::Loose));
   CHECK(muonSelector.initialize());
 
   // Electron Selector Tool
-  AsgElectronLikelihoodTool electronSelector("electronSelector");
-  CHECK(electronSelector.initialize());
+  // AsgElectronLikelihoodTool electronSelector("electronSelector");
+  // CHECK(electronSelector.initialize());
 
   // Tau Truth Matching Tool
   TauAnalysisTools::TauTruthMatchingTool truthMatchTool("truthMatchTool");
@@ -121,6 +121,9 @@ int main(int argc, char **argv) {
   CHECK(trigTauMatchingTool.initialize());
 
   std::vector<std::string> triggers;
+  triggers.push_back("HLT_tau25_perf_ptonly");
+  triggers.push_back("HLT_tau25_medium1_ptonly");
+  triggers.push_back("HLT_tau25_perf_tracktwo");
   triggers.push_back("HLT_tau25_medium1_tracktwo");
 
 
@@ -187,8 +190,8 @@ int main(int argc, char **argv) {
     selected_electrons->setStore(selected_electrons_aux);
 
     for (const auto electron: *electrons) {
-      if (not electronSelector.accept(electron))
-	continue;
+      // if (not electronSelector.accept(electron))
+      // 	continue;
       selectDec(*electron) = true;
       xAOD::Electron * new_electron = new xAOD::Electron();
       new_electron->makePrivateStore(*electron);
@@ -219,30 +222,51 @@ int main(int argc, char **argv) {
     selected_taus->sort(Utils::comparePt);
     xAOD::TauJet* tau1 = selected_taus->at(0);
 
+      
+    
+
+
     auto* truth_tau1 = truthMatchTool.applyTruthMatch(*tau1);
     if (truth_tau1 == NULL)
       continue;
     // --------------
 
-    // ---->>> Jets
-    xAOD::JetContainer* selected_jets = new xAOD::JetContainer();
-    xAOD::AuxContainerBase* selected_jets_aux = new xAOD::AuxContainerBase();
-    selected_jets->setStore(selected_jets_aux);
-    for (const auto jet: *jets) {
-      selectDec(*jet) = true;
-      xAOD::Jet* new_jet = new xAOD::Jet();
-      new_jet->makePrivateStore(*jet);
-      selected_jets->push_back(new_jet);
+    for (auto trig: triggers) {
+      bool pass = trigDecTool.isPassed(trig) and trigTauMatchingTool.match(tau1, trig);
+      curves_tools_nopt[trig]->fill_lephad(pass, tau1);
     }
 
-    if (selected_jets->size() < 1)
+    if (tau1->pt() < 25000.)
       continue;
+    
+    h.Fill("notrigger", 1);
+    for (auto trig: triggers) {
+      bool pass = trigDecTool.isPassed(trig) and trigTauMatchingTool.match(tau1, trig);
+      curves_tools_final[trig]->fill_lephad(pass, tau1);
+      if (pass) 
+	h.Fill(trig.c_str(), 1);
+    }
 
-    selected_jets->sort(Utils::comparePt);
-    // --------------
 
-    // tau - jet overlap removal
-    CHECK(orTool.removeOverlaps(selected_electrons, selected_muons, selected_jets, selected_taus));
+    // // ---->>> Jets
+    // xAOD::JetContainer* selected_jets = new xAOD::JetContainer();
+    // xAOD::AuxContainerBase* selected_jets_aux = new xAOD::AuxContainerBase();
+    // selected_jets->setStore(selected_jets_aux);
+    // for (const auto jet: *jets) {
+    //   selectDec(*jet) = true;
+    //   xAOD::Jet* new_jet = new xAOD::Jet();
+    //   new_jet->makePrivateStore(*jet);
+    //   selected_jets->push_back(new_jet);
+    // }
+
+    // if (selected_jets->size() < 1)
+    //   continue;
+
+    // selected_jets->sort(Utils::comparePt);
+    // // --------------
+
+    // // tau - jet overlap removal
+    // CHECK(orTool.removeOverlaps(selected_electrons, selected_muons, selected_jets, selected_taus));
 
 
 
