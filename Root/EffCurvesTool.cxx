@@ -13,10 +13,10 @@ EffCurvesTool::EffCurvesTool(const std::string & name)
   m_eff["leading_tau_eta"] = new TEfficiency(("lead_tau_eta_" + name).c_str() , "leading_tau", Neta, bins_eta);
   m_eff["subleading_tau_eta"] = new TEfficiency(("sublead_tau_eta_" + name).c_str() , "subleading_tau", 20, -5, 5);
 
-  m_eff["jet_pt"] = new TEfficiency(("jet_pt_" + name).c_str() , "leading_jet", 16, 20, 100);
+  m_eff["jet_pt"] = new TEfficiency(("jet_pt_" + name).c_str() , "leading_jet", 8, 20, 100);
   m_eff["jet_eta"] = new TEfficiency(("jet_eta_" + name).c_str() , "leading_jet", 10, -5, 5);
 
-  m_eff["delta_r"] = new TEfficiency(("delta_r_" + name).c_str(), "delta_r", 15, 0, 3);
+  m_eff["delta_r"] = new TEfficiency(("delta_r_" + name).c_str(), "delta_r", 8, 0, 3.2);
 
 }
 

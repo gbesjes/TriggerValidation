@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import re
+from collections import OrderedDict
 import logging; logging.basicConfig(level=logging.DEBUG)
 from argparse import ArgumentParser
 
@@ -18,11 +19,16 @@ EFF_PATTERN = re.compile(
     '(?P<trigger>\w+)_'
     '(?P<step>final|nodr|nopt)?$')
 
-TRIGGERS = {
+TRIGGERS = OrderedDict({
     'tau35_tight1_tracktwo_tau25_tight1_tracktwo': {
         'title': '2 tight taus, HLT p_{T} > 35, 25, L1_JET > 25', 
         'color': 'blue', 
-        'marker': 'square', 
+        'marker': 'circle', 
+        'line': 'solid'},
+    'tau35_medium1_tracktwo_tau25_medium1_tracktwo_L1DR-TAU20ITAU12I-J25': {
+        'title': '2 medium taus, HLT p_{T} > 35, 25, L1_JET > 25, #Delta R(#tau_{1}, #tau_{2}) < 2.8',
+        'color': 'blue',
+        'marker': 'square',
         'line': 'solid'},
     'tau35_medium1_tracktwo_tau25_medium1_tracktwo': {
         'title': '2 medium taus, HLT p_{T} > 35, 25, L1_JET > 25',
@@ -45,31 +51,31 @@ TRIGGERS = {
         'marker': 'dot',
         'line': 'dashed',},
     'tau35_perf_ptonly_tau25_perf_ptonly_L1TAU20IM_2TAU12IM': {
-        'title': '2 taus, no id, no tracking, HLT p_{T} > 35, 25',
+        'title': '2 taus, no id, no FTF, HLT p_{T} > 35, 25',
         'color': 'black',
         'marker': 'triangle',
         'line': 'solid'},
     'tau25_perf_ptonly': {
-        'title': 'no id, no FTk, HLT p_{T} > 25 GeV',
+        'title': 'no id, no FTF, HLT p_{T} > 25 GeV',
         'color': 'black',
         'marker': 'triangle',
         'line': 'solid'},
+    'tau25_medium1_ptonly': {
+        'title': 'medium ID, no FTF, HLT p_{T} > 25 GeV',
+        'color': 'green',
+        'marker': 'triangle',
+        'line': 'solid'},
     'tau25_perf_tracktwo': {
-        'title': 'no id, FTk, HLT p_{T} > 25 GeV',
+        'title': 'no id, FTF, HLT p_{T} > 25 GeV',
         'color': 'red',
         'marker': 'triangle',
         'line': 'solid'},
     'tau25_medium1_tracktwo': {
-        'title': 'medium ID, FTk, HLT p_{T} > 25 GeV',
+        'title': 'medium ID, FTF, HLT p_{T} > 25 GeV',
         'color': 'blue',
         'marker': 'triangle',
         'line': 'solid'},
-    'tau25_medium1_ptonly': {
-        'title': 'medium ID, no FTk, HLT p_{T} > 25 GeV',
-        'color': 'green',
-        'marker': 'triangle',
-        'line': 'solid'},
-    }
+    })
 
 VARIABLES = {
     'lead_tau_pt': '#tau_{1} p_{T} [GeV]',
@@ -85,7 +91,7 @@ VARIABLES = {
 
 
 def get_plotables(rfile):
-    efficiencies = {}
+    efficiencies = OrderedDict()
     variables = []
     triggers = []
     steps = []
@@ -189,10 +195,10 @@ if __name__ == '__main__':
                 for eff in effs:
                     eff.painted_graph.Draw('samePE')
                 leg = Legend(
-                    effs, textsize=20, 
-                    leftmargin=0.15, 
+                    effs, textsize=18, 
+                    leftmargin=0.12, 
                     topmargin=0.35, 
-                    rightmargin=0.05)
+                    rightmargin=0.08)
                 leg.Draw()
                 lat = ROOT.TLatex(
                     c.GetLeftMargin(),
