@@ -93,43 +93,45 @@ EL::StatusCode L1EmulationLoop :: initialize ()
     m_trigConfigTool = asg::ToolStore::get<TrigConf::xAODConfigTool>("xAODConfigTool");
   } else {
     m_trigConfigTool = new TrigConf::xAODConfigTool("xAODConfigTool"); // gives us access to the meta-data
+    EL_RETURN_CHECK("initialize", m_trigConfigTool->initialize());
   }
-  EL_RETURN_CHECK( "initialize", m_trigConfigTool->initialize() );
+  
 
-  if (asg::ToolStore::contains<Trig::TrigDecisionTool>("TrigDecisionTool")) {
-    m_trigDecisionTool =  asg::ToolStore::get<Trig::TrigDecisionTool>("TrigDecisionTool");
+  if (asg::ToolStore::contains<Trig::TrigDecisionTool>("TrigDecTool")) {
+    m_trigDecisionTool =  asg::ToolStore::get<Trig::TrigDecisionTool>("TrigDecTool");
   } else {
     ToolHandle< TrigConf::ITrigConfigTool > trigConfigHandle( m_trigConfigTool );
-    m_trigDecisionTool = new Trig::TrigDecisionTool("TrigDecisionTool");
+    m_trigDecisionTool = new Trig::TrigDecisionTool("TrigDecTool");
     EL_RETURN_CHECK( "initialize", m_trigDecisionTool->setProperty( "ConfigTool", trigConfigHandle ) ); // connect the TrigDecisionTool to the ConfigTool
     EL_RETURN_CHECK( "initialize", m_trigDecisionTool->setProperty( "TrigDecisionKey", "xTrigDecision" ) );
+    EL_RETURN_CHECK( "initialize", m_trigDecisionTool->initialize() );
   }
 
-  EL_RETURN_CHECK( "initialize", m_trigDecisionTool->initialize() );
 
   if(asg::ToolStore::contains<ToolsRegistry>("ToolsRegistry")) {
     m_registry = asg::ToolStore::get<ToolsRegistry>("ToolsRegistry");
   } else {
     m_registry = new ToolsRegistry("ToolsRegistry");
+    m_registry->msg().setLevel(this->msg().level());
     EL_RETURN_CHECK("initialize", m_registry->initialize());
   }
 
-  if (asg::ToolStore::contains<TrigTauEmul::Level1EmulationTool>("TrigTauEmulator")) {
-    m_emulationTool = asg::ToolStore::get<TrigTauEmul::Level1EmulationTool>("TrigTauEmulator");
+  if (asg::ToolStore::contains<TrigTauEmul::Level1EmulationTool>("Level1TrigTauEmulator")) {
+    m_l1_emulationTool = asg::ToolStore::get<TrigTauEmul::Level1EmulationTool>("Level1TrigTauEmulator");
   } else {
-    m_emulationTool = new TrigTauEmul::Level1EmulationTool("TrigTauEmulator");
-    EL_RETURN_CHECK("initialize", m_emulationTool->setProperty("l1_chains", l1_chains));
-    EL_RETURN_CHECK("initialize", m_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
-    EL_RETURN_CHECK("initialize", m_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
-    EL_RETURN_CHECK("initialize", m_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
-    EL_RETURN_CHECK("initialize", m_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
-    EL_RETURN_CHECK("initialize", m_emulationTool->initialize());
+    m_l1_emulationTool = new TrigTauEmul::Level1EmulationTool("Level1TrigTauEmulator");
+    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("l1_chains", l1_chains));
+    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
+    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
+    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
+    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
+    EL_RETURN_CHECK("initialize", m_l1_emulationTool->initialize());
+    m_l1_emulationTool->msg().setLevel(this->msg().level());
   }
 
   xAOD::TEvent* event = wk()->xaodEvent();
 
-  // ATH_MSG_INFO("Number of events = " << event->getEntries());
-  Info("initialize()", "Number of events = %lli", event->getEntries());
+  ATH_MSG_INFO("Number of events = " << event->getEntries());
 
   return EL::StatusCode::SUCCESS;
 }
@@ -140,6 +142,9 @@ EL::StatusCode L1EmulationLoop :: execute ()
 {
 
   xAOD::TEvent* event = wk()->xaodEvent();
+  ATH_MSG_VERBOSE("--------------------------") ;
+  ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+  ATH_MSG_VERBOSE("--------------------------") ;
 
   const xAOD::EventInfo* ei = 0;
   EL_RETURN_CHECK("execute", event->retrieve(ei, "EventInfo"));  
@@ -156,13 +161,13 @@ EL::StatusCode L1EmulationLoop :: execute ()
   const xAOD::EnergySumRoI* l1xe = 0;
   EL_RETURN_CHECK("execute", event->retrieve(l1xe, "LVL1EnergySumRoI"));
 
-  StatusCode code = m_emulationTool->calculate(l1taus, l1jets, l1muons, l1xe);
+  StatusCode code = m_l1_emulationTool->calculate(l1taus, l1jets, l1muons, l1xe);
   if (code == StatusCode::FAILURE)
     return EL::StatusCode::FAILURE;
 
   for (auto it: l1_chains) {
     // emulation decision
-    bool emul_passes_event = m_emulationTool->decision(it);
+    bool emul_passes_event = m_l1_emulationTool->decision(it);
     
     // TDT decision
     auto chain_group = m_trigDecisionTool->getChainGroup(it);
@@ -175,9 +180,9 @@ EL::StatusCode L1EmulationLoop :: execute ()
       h_EMU_fires->Fill(it.c_str(), 1);
 
     if (emul_passes_event != cg_passes_event){
-      Warning("execute", "CHAIN %s: event number %d -- lumi block %d", it.c_str(), (int)ei->eventNumber(), (int) ei->lumiBlock());
-      Warning("execute", "CHAIN %s: TDT: %d -- EMULATION: %d", it.c_str(), (int)cg_passes_event, (int)emul_passes_event);
-      EL_RETURN_CHECK("execute", m_emulationTool->PrintReport(it, l1taus, l1jets, l1muons, l1xe));
+      // Warning("execute", "CHAIN %s: event number %d -- lumi block %d", it.c_str(), (int)ei->eventNumber(), (int) ei->lumiBlock());
+      // Warning("execute", "CHAIN %s: TDT: %d -- EMULATION: %d", it.c_str(), (int)cg_passes_event, (int)emul_passes_event);
+      // EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(it, l1taus, l1jets, l1muons, l1xe));
       h_TDT_EMU_diff->Fill(it.c_str(), 1);
       // Validator.fill_histograms(ei, l1taus, "TAU12");
 
@@ -215,27 +220,26 @@ EL::StatusCode L1EmulationLoop :: postExecute ()
 
 EL::StatusCode L1EmulationLoop :: finalize ()
 {
-  // xAOD::TEvent* event = wk()->xaodEvent();
 
-  // cleaning up trigger tools
   if( m_trigConfigTool ) {
+    m_trigConfigTool = nullptr;
     delete m_trigConfigTool;
-    m_trigConfigTool = 0;
   }
   if( m_trigDecisionTool ) {
+    m_trigDecisionTool = nullptr;
     delete m_trigDecisionTool;
-    m_trigDecisionTool = 0;
   }
 
   if( m_registry ) {
+    m_registry = nullptr;
     delete m_registry;
-    m_registry = 0;
   }
 
-  if( m_emulationTool ) {
-    delete m_emulationTool;
-    m_emulationTool = 0;
+  if( m_l1_emulationTool ) {
+    m_l1_emulationTool = nullptr;
+    delete m_l1_emulationTool;
   }
+
 
   return EL::StatusCode::SUCCESS;
 }

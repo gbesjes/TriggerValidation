@@ -1,3 +1,5 @@
+#include <TriggerValidation/HLTEmulationLoop.h>
+
 #include <TriggerValidation/L1EmulationLoop.h>
 
 #ifdef __CINT__
@@ -11,4 +13,8 @@
 
 #ifdef __CINT__
 #pragma link C++ class L1EmulationLoop+;
+#endif
+
+#ifdef __CINT__
+#pragma link C++ class HLTEmulationLoop+;
 #endif
