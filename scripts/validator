@@ -25,9 +25,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ROOT.gROOT.Macro('$ROOTCOREDIR/scripts/load_packages.C')
-    if not ROOT.xAOD.Init().isSuccess():
-        raise RuntimeError
+    # if not ROOT.xAOD.Init().isSuccess():
+    #     raise RuntimeError
 
+    print 'grab eos samples'
     # Get SampleHandler from EOS
     from eos import get_sample, SAMPLES
     sample = get_sample(SAMPLES[args.sample])
