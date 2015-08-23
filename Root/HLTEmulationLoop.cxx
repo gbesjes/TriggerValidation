@@ -153,7 +153,7 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
   } else {
     m_registry = new ToolsRegistry("ToolsRegistry");
     EL_RETURN_CHECK("initialize", m_registry->setProperty("RecalculateBDTscore", false));
-    m_registry->msg().setLevel(MSG::DEBUG);
+    m_registry->msg().setLevel(this->msg().level());
     EL_RETURN_CHECK("initialize", m_registry->initialize());
   }
 
