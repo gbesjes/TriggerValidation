@@ -96,10 +96,14 @@ EL::StatusCode HLTEmulationLoop :: setupJob (EL::Job& job)
 
 EL::StatusCode HLTEmulationLoop :: histInitialize ()
 {
-  // Here you do everything that needs to be done at the very
-  // beginning on each worker node, e.g. create histograms and output
-  // trees.  This method gets called before any input files are
-  // connected.
+
+  h_TDT_EMU_diff = new TH1F("h_TDT_Emulation_differences", "TDT_Emulation_differences", chains_to_test.size(), 0, chains_to_test.size());
+  h_TDT_fires = new TH1F("h_TDT_fires", "TDT_fires_total_number", chains_to_test.size(), 0, chains_to_test.size());
+  h_EMU_fires = new TH1F("h_EMU_fires", "EMU_fires_total_number", chains_to_test.size(), 0, chains_to_test.size());
+
+  wk()->addOutput (h_TDT_EMU_diff);
+  wk()->addOutput (h_TDT_fires);
+  wk()->addOutput (h_EMU_fires);
   return EL::StatusCode::SUCCESS;
 }
 
@@ -228,6 +232,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   auto cg = m_trigDecisionTool->getChainGroup(reference_chain);
   auto features = cg->features(trigger_condition);
 
+
   xAOD::TauJetContainer* presel_taus = new xAOD::TauJetContainer();
   xAOD::TauJetAuxContainer* presel_taus_aux = new xAOD::TauJetAuxContainer();
   presel_taus->setStore(presel_taus_aux);
@@ -240,6 +245,9 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       presel_taus->push_back(new_tau);
     }
   }
+  
+  if (tauPreselFeatures.size() != 1)
+    return EL::StatusCode::SUCCESS;
 
   //get the tracking info
   // NOTE: we should fix this in two ways
@@ -256,6 +264,9 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   preselTracksIso->setStore(preselTracksIsoAux);
   preselTracksCore->setStore(preselTracksCoreAux);
     
+  ATH_MSG_VERBOSE("Core Tracks containers size = " << preselTracksCoreFeatures.size());
+  ATH_MSG_VERBOSE("Iso Tracks containers size = " << preselTracksIsoFeatures.size());
+
   // iso tracks
   for(auto &trackContainer: preselTracksIsoFeatures) {
     if(!trackContainer.cptr()) { continue; }
@@ -283,6 +294,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   std::string tauContainerName = "TrigTauRecMerged";
   // std::string tauContainerName = "TrigTauRecCaloOnly";
   auto tauHltFeatures = features.containerFeature<xAOD::TauJetContainer>(tauContainerName);
+  ATH_MSG_VERBOSE("HLT Tau containers size = " << tauHltFeatures.size());
   for (auto &tauContainer: tauHltFeatures) {
     if (!tauContainer.cptr()) { continue; }
     for (auto tau: *tauContainer.cptr()) {
@@ -292,13 +304,22 @@ EL::StatusCode HLTEmulationLoop :: execute ()
     }
   }
 
+  // EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
   EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
   
   for (auto it: chains_to_test) {
     bool emulation_decision = m_hlt_emulationTool->decision(it);
+
     auto chain_group = m_trigDecisionTool->getChainGroup(trim(it));
     bool cg_passes_event = chain_group->isPassed(trigger_condition);  
+    if(cg_passes_event)
+      h_TDT_fires->Fill(it.c_str(), 1);
+    
+    if (emulation_decision)
+      h_EMU_fires->Fill(it.c_str(), 1);
+
     if (emulation_decision != cg_passes_event){
+      h_TDT_EMU_diff->Fill(it.c_str(), 1);
       // if(emulation_decision) { 
       // 	++fire_difference_emu[it]; 
       // } else { 
@@ -307,9 +328,12 @@ EL::StatusCode HLTEmulationLoop :: execute ()
         
       // BrokenEventInfo eventInfo(entry, ei->eventNumber(), ei->lumiBlock(), it);
       // brokenEvents.push_back( eventInfo );
-
-      ATH_MSG_DEBUG(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
-      ATH_MSG_DEBUG(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
+      ATH_MSG_INFO("Chain " << it << " is being tested");
+      ATH_MSG_INFO(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
+      ATH_MSG_INFO(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
+      ATH_MSG_INFO("TDT = " << h_TDT_fires->GetBinContent(1) 
+		   << " / EMU = " << h_EMU_fires->GetBinContent(1) 
+		   << " / difference = " << h_TDT_EMU_diff->GetBinContent(1));
     }
   }
 
@@ -388,3 +412,4 @@ EL::StatusCode HLTEmulationLoop :: histFinalize ()
   // they processed input events.
   return EL::StatusCode::SUCCESS;
 }
+

@@ -7,6 +7,9 @@
 #include "TrigTauEmulation/Level1EmulationTool.h"
 #include "TrigTauEmulation/HltEmulationTool.h"
 #include "TrigTauEmulation/ToolsRegistry.h"
+#include "TH1F.h"
+
+#include "xAODTau/TauJet.h"
 
 class HLTEmulationLoop : public EL::Algorithm
 {
@@ -24,6 +27,9 @@ public:
   // protected from being send from the submission node to the worker
   // node (done by the //!)
 public:
+  TH1F* h_TDT_EMU_diff; //!
+  TH1F* h_TDT_fires; //!
+  TH1F* h_EMU_fires; //!
   // Tree *myTree; //!
   // TH1 *myHist; //!
   Trig::TrigDecisionTool *m_trigDecisionTool; //!
@@ -33,7 +39,6 @@ public:
   TrigTauEmul::HltEmulationTool * m_hlt_emulationTool; //!
 
   ToolsRegistry * m_registry; //!
-
 
 
   // this is a standard constructor
