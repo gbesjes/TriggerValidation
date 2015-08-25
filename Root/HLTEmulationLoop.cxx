@@ -101,6 +101,13 @@ EL::StatusCode HLTEmulationLoop :: histInitialize ()
   h_TDT_fires = new TH1F("h_TDT_fires", "TDT_fires_total_number", chains_to_test.size(), 0, chains_to_test.size());
   h_EMU_fires = new TH1F("h_EMU_fires", "EMU_fires_total_number", chains_to_test.size(), 0, chains_to_test.size());
 
+  for (unsigned int ich = 0; ich < chains_to_test.size(); ich++) {
+    auto chain = chains_to_test[ich];
+    h_TDT_EMU_diff->GetXaxis()->SetBinLabel(ich + 1, chain.c_str());
+    h_TDT_fires->GetXaxis()->SetBinLabel(ich + 1, chain.c_str());
+    h_EMU_fires->GetXaxis()->SetBinLabel(ich + 1, chain.c_str());
+  }
+
   wk()->addOutput (h_TDT_EMU_diff);
   wk()->addOutput (h_TDT_fires);
   wk()->addOutput (h_EMU_fires);

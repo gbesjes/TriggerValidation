@@ -18,7 +18,7 @@ if __name__ == '__main__':
         help='default = %(default)s')
     parser.add_argument('--run-dir', type=str, default=None, help='default = %(default)s')
     parser.add_argument('--l1-trig', type=str, default=None, help='default = %(default)s')
-    parser.add_argument('--hlt-trig', type=str, default='HLT_tau25_perf_tracktwo', help='default = %(default)s')
+    parser.add_argument('--hlt-trig', type=str, default=None, help='default = %(default)s')
     parser.add_argument('--hlt-ref-trig', type=str, default='HLT_tau25_idperf_tracktwo', help='default = %(default)s')
     parser.add_argument('--verbose', default=False, action='store_true', help='default = %(default)s')
     parser.add_argument('--num-events', default=-1, type=int, help='default = %(default)s')
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     if args.hlt_trig != None:
         HLT_TRIGGERS = [args.hlt_trig]
     else:
-        HLT_TRIGGER = HLT_ITEMS
+        HLT_TRIGGERS = HLT_ITEMS
 
     if args.step == 'l1':
         alg = ROOT.L1EmulationLoop()

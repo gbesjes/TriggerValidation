@@ -71,6 +71,8 @@ L1_ITEMS = [
 HLT_ITEMS = [
     'HLT_tau25_perf_tracktwo',
     'HLT_tau25_medium1_tracktwo',
+    'HLT_tau35_perf_tracktwo',
+    'HLT_tau35_medium1_tracktwo',
 ]
 
 
