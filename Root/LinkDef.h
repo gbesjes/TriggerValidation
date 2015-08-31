@@ -1,3 +1,5 @@
+#include <TriggerValidation/AcceptanceHadHadTDR.h>
+
 #include <TriggerValidation/HLTEmulationLoop.h>
 
 #include <TriggerValidation/L1EmulationLoop.h>
@@ -17,4 +19,8 @@
 
 #ifdef __CINT__
 #pragma link C++ class HLTEmulationLoop+;
+#endif
+
+#ifdef __CINT__
+#pragma link C++ class AcceptanceHadHadTDR+;
 #endif

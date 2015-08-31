@@ -187,9 +187,9 @@ EL::StatusCode L1EmulationLoop :: execute ()
       h_EMU_fires->Fill(it.c_str(), 1);
 
     if (emul_passes_event != cg_passes_event){
-      // Warning("execute", "CHAIN %s: event number %d -- lumi block %d", it.c_str(), (int)ei->eventNumber(), (int) ei->lumiBlock());
-      // Warning("execute", "CHAIN %s: TDT: %d -- EMULATION: %d", it.c_str(), (int)cg_passes_event, (int)emul_passes_event);
-      // EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(it, l1taus, l1jets, l1muons, l1xe));
+      Warning("execute", "CHAIN %s: event number %d -- lumi block %d", it.c_str(), (int)ei->eventNumber(), (int) ei->lumiBlock());
+      Warning("execute", "CHAIN %s: TDT: %d -- EMULATION: %d", it.c_str(), (int)cg_passes_event, (int)emul_passes_event);
+      EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(it, l1taus, l1jets, l1muons, l1xe));
       h_TDT_EMU_diff->Fill(it.c_str(), 1);
       // Validator.fill_histograms(ei, l1taus, "TAU12");
 

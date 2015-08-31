@@ -3,6 +3,7 @@
 
 
 #include "xAODBase/IParticle.h"
+#include "xAODTrigger/EmTauRoI.h"
 
 #include "AssociationUtils/OverlapRemovalTool.h"
 
@@ -30,6 +31,10 @@ namespace Utils {
 
   bool comparePt(const xAOD::IParticle* t1, const xAOD::IParticle* t2) {
     return (t1->pt() > t2->pt() ? true: false);
+  }
+
+  bool compareTauClus(const xAOD::EmTauRoI* t1, const xAOD::EmTauRoI* t2) {
+    return (t1->tauClus() > t2->tauClus() ? true: false);
   }
 
   std::vector<std::string> splitNames(const std::string& files, std::string sep = ",") {

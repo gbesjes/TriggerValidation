@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+import os
+import uuid
+import argparse
+import ROOT
+
+
+
+if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verbose', default=False, action='store_true', help='default = %(default)s')
+    parser.add_argument('--num-events', default=-1, type=int, help='default = %(default)s')
+    parser.add_argument('--run-dir', type=str, default=None, help='default = %(default)s')
+    group_driver = parser.add_mutually_exclusive_group()
+    group_driver.add_argument('--direct', dest='driver', action='store_const', const='direct', help='Run your jobs locally.')
+    group_driver.add_argument('--grid', dest='driver', action='store_const', const='grid', help='Run your jobs on the grid.')
+    group_driver.set_defaults(driver='direct')
+    args = parser.parse_args()
+
+
+    ROOT.gROOT.Macro('$ROOTCOREDIR/scripts/load_packages.C')
+    # if not ROOT.xAOD.Init().isSuccess():
+    #     raise RuntimeError
+
+    sample_name = 'mc15_13TeV.341157.PowhegPythia8EvtGen_CT10_AZNLOCTEQ6L1_VBFH125_tautauhh.merge.AOD.e3888_s2608_s2183_r6765_r6282'
+    if args.driver == 'direct':
+        print 'grab eos samples'
+        # Get SampleHandler from EOS
+        from eos import get_sample
+        sample = get_sample(sample_name)
+    elif args.driver == 'grid':
+        sample = ROOT.SH.SampleHandler()
+        ROOT.SH.scanDQ2(sample, sample_name)
+
+    sample.printContent()
+    sample.setMetaString ("nc_tree", "CollectionTree")
+        
+    alg = ROOT.AcceptanceHadHadTDR()
+    alg.SetName('AcceptanceHadHad')
+    alg.l1_min = 11000
+    alg.nsteps = 60
+    alg.step = 1000
+    alg.tau1_pt = 35000
+    alg.tau2_pt = 25000
+    alg.min_dr_tautau = 0.8
+    alg.max_dr_tautau = 2.4
+    alg.n_jets = 2
+    alg.jet1_pt = 50000
+    alg.jet2_pt = 30000
+    alg.jet_eta = 4.5
+    alg.do_vbf_sel = True
+    alg.delta_eta_jj = 2.0
+
+    if args.verbose:
+        # See atlas/Control/AthToolSupport/AsgTools/AsgTools/MsgLevel.h
+        alg.setMsgLevel(1) # VERBOSE
+    else:
+        alg.setMsgLevel(3) # INFO
+
+    # Setup the EventLoop Job
+    job = ROOT.EL.Job()
+    job.sampleHandler(sample)
+    job.algsAdd(alg)
+
+    if args.num_events > 0:
+      job.options().setDouble(ROOT.EL.Job.optMaxEvents, args.num_events)
+
+    # define the run dir
+    if args.run_dir == None:
+        run_dir = 'run_' + uuid.uuid4().hex
+    else:
+        run_dir = args.run_dir
+        
+    # run, run, run!
+    if args.driver == 'direct':
+        driver = ROOT.EL.DirectDriver()
+        driver.submit(job, run_dir)
+
+    elif args.driver == 'grid':
+        driver = ROOT.EL.PrunDriver()
+        driver.options().setString("nc_outputSampleName", "user.qbuat.test_prundriver_v1")
+        driver.submitOnly(job, run_dir)

@@ -8,10 +8,11 @@ from triggers import L1_ITEMS, HLT_ITEMS, list_to_vector
 
 
 if __name__ == '__main__':
+    from samples import SAMPLES
     
     parser = argparse.ArgumentParser()
     parser.add_argument('step', type=str, choices=['l1', 'hlt'], help='Choose l1 or hlt')
-    parser.add_argument('sample', type=str, choices=['Z', 'EB'], help='Choose Z or EB')
+    parser.add_argument('sample', type=str, choices=SAMPLES.keys(), help='choose the sample to run over')
     parser.add_argument(
         '--path', type=str, 
         default='/afs/cern.ch/user/q/qbuat/work/public/mc15_13TeV/test/', 
@@ -25,12 +26,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ROOT.gROOT.Macro('$ROOTCOREDIR/scripts/load_packages.C')
+
     # if not ROOT.xAOD.Init().isSuccess():
     #     raise RuntimeError
 
     print 'grab eos samples'
     # Get SampleHandler from EOS
-    from eos import get_sample, SAMPLES
+    from eos import get_sample
     sample = get_sample(SAMPLES[args.sample])
     sample.printContent()
     sample.setMetaString ("nc_tree", "CollectionTree")
