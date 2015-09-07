@@ -2,7 +2,6 @@
 
 EffCurvesTool::EffCurvesTool(const std::string & name)
 {
-
   m_eff["leading_tau_pt"] = new TEfficiency(("lead_tau_pt_" + name).c_str() , "leading_tau", 16, 20, 100);
   m_eff["subleading_tau_pt"] = new TEfficiency(("sublead_tau_pt_" + name).c_str() , "subleading_tau", 16, 20, 100);
   m_eff["leading_tau_ntracks"] = new TEfficiency(("lead_tau_ntracks_" + name).c_str() , "leading_tau", 5, 0, 5);
@@ -49,4 +48,14 @@ bool EffCurvesTool::fill_lephad(bool pass, const xAOD::TauJet * t1)
   m_eff["leading_tau_ntracks"]->Fill(pass, t1->nTracks());
 
   return true;
+}
+
+
+void EffCurvesTool::record(EL::Worker* wk)
+{
+  for (auto eff: m_eff) {
+    std::cout << eff.second->GetName() << std::endl;
+    // wk->addOutput((TH1F*)eff.second->GetPassedHistogram());
+    // wk->addOutput((TH1F*)eff.second->GetTotalHistogram());
+  }
 }

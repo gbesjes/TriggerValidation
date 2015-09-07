@@ -63,7 +63,7 @@ L1_ITEMS = [
     'L1_DR-EM15TAU12I-J25',
     'L1_TAU20ITAU12I-J25',
     'L1_DR-TAU20ITAU12I',
-    # 'L1_BOX-TAU20ITAU12I', # Someone should implement the box :-/
+    # 'L1_BOX-TAU20ITAU12I', # Someone should implement the box properly :-/
     'L1_DR-TAU20ITAU12I-J25',
     ]
 

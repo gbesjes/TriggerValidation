@@ -5,6 +5,7 @@ import argparse
 import ROOT
 
 
+from triggers import list_to_vector
 
 if __name__ == '__main__':
     
@@ -36,13 +37,34 @@ if __name__ == '__main__':
     sample.printContent()
     sample.setMetaString ("nc_tree", "CollectionTree")
         
+    TRIGGERS = [
+        "L1_TAU12",
+        "L1_TAU60",
+        "L1_TAU20_2TAU12",
+        "L1_TAU20IM_2TAU12IM",
+        "L1_TAU20ITAU12I-J25",
+        "L1_TAU20IM_2TAU12IM_J25_2J20_3J12",
+        "L1_J25_2J20_3J12_DR-TAU20ITAU12I",
+        "L1_DR-TAU20ITAU12I",
+        "L1_DR-TAU20ITAU12I-J25",
+        "HLT_tau35_perf_ptonly_tau25_perf_ptonly_L1TAU20IM_2TAU12IM",
+        "HLT_tau35_loose1_tracktwo_tau25_loose1_tracktwo_L1TAU20IM_2TAU12IM",
+        "HLT_tau35_loose1_tracktwo_tau25_loose1_tracktwo",
+        "HLT_tau35_medium1_tracktwo_tau25_medium1_tracktwo_L1TAU20IM_2TAU12IM",
+        "HLT_tau35_medium1_tracktwo_tau25_medium1_tracktwo_L1DR-TAU20ITAU12I-J25",
+        "HLT_tau35_medium1_tracktwo_tau25_medium1_tracktwo",
+        "HLT_tau35_tight1_tracktwo_tau25_tight1_tracktwo",
+        ]
+
     alg = ROOT.AcceptanceHadHadTDR()
     alg.SetName('AcceptanceHadHad')
     alg.l1_min = 11000
-    alg.nsteps = 60
-    alg.step = 1000
-    alg.tau1_pt = 35000
-    alg.tau2_pt = 25000
+    alg.l1_nsteps = 60
+    alg.l1_step = 1000
+    alg.tau1_pt = 20000
+    alg.tau2_pt = 20000
+    alg.off_step = 2000
+    alg.off_nsteps = 30
     alg.min_dr_tautau = 0.8
     alg.max_dr_tautau = 2.4
     alg.n_jets = 2
@@ -51,6 +73,9 @@ if __name__ == '__main__':
     alg.jet_eta = 4.5
     alg.do_vbf_sel = True
     alg.delta_eta_jj = 2.0
+    alg.triggers = list_to_vector(TRIGGERS)
+
+
 
     if args.verbose:
         # See atlas/Control/AthToolSupport/AsgTools/AsgTools/MsgLevel.h
@@ -62,6 +87,13 @@ if __name__ == '__main__':
     job = ROOT.EL.Job()
     job.sampleHandler(sample)
     job.algsAdd(alg)
+
+    # out = ROOT.EL.OutputStream("hist-output", "xAOD");
+    # out.options().setString(ROOT.EL.OutputStream.optContainerSuffix, "out");
+    # job.outputAdd(out);
+
+
+
 
     if args.num_events > 0:
       job.options().setDouble(ROOT.EL.Job.optMaxEvents, args.num_events)
@@ -79,5 +111,10 @@ if __name__ == '__main__':
 
     elif args.driver == 'grid':
         driver = ROOT.EL.PrunDriver()
-        driver.options().setString("nc_outputSampleName", "user.qbuat.test_prundriver_v1")
+        driver.options().setString("nc_outputSampleName", "group.phys-higgs.test_prundriver_v1")
+        job.options().setDouble("nc_official", 1);
+        job.options().setString("nc_voms", "atlas:/atlas/phys-higgs/Role=production");
+        job.options().setDouble("nc_mergeOutput", 0)
+        driver.options().setDouble("nc_nFilesPerJob", 1)
+        driver.options().setDouble("nc_showCmd", 1)
         driver.submitOnly(job, run_dir)

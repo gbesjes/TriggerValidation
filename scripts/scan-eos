@@ -27,7 +27,8 @@ if __name__ == '__main__':
     eos_list = ROOT.SH.DiskListEOS(args.path, 'root://eosatlas/' + args.path)
     ROOT.SH.ScanDir().scan(sniffer, eos_list) 
     log.info('\t --- Sample found on eos at {0} ---'.format(args.path))
+    print ""
     for s in sniffer:
         log.info("\t {0}: {1} files".format(s.name(), s.numFiles()))
-
+        log.info("")
     # sniffer.printContent()

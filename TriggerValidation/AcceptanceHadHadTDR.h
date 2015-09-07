@@ -2,24 +2,33 @@
 #define TriggerValidation_AcceptanceHadHadTDR_H
 
 #include <EventLoop/Algorithm.h>
+#include "TrigConfxAOD/xAODConfigTool.h"
+#include "TrigDecisionTool/TrigDecisionTool.h"
 #include "xAODJet/JetContainer.h"
 #include "xAODTau/TauJetContainer.h"
 #include "xAODTrigger/EmTauRoIContainer.h"
+// Local stuff
+#include "TriggerValidation/EffCurvesTool.h"
 
 #include <map>
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TEfficiency.h"
 
 class AcceptanceHadHadTDR : public EL::Algorithm
 {
   // put your configuration variables here as public variables.
   // that way they can be set directly from CINT and python.
-public:
+ public:
   // float cutValue;
   //
   int l1_min;
-  int step;
-  int nsteps;
+  int l1_step;
+  int l1_nsteps;
+
+  int off_step;
+  int off_nsteps;
+
   // Cuts 
   float tau1_pt;
   float tau2_pt;
@@ -34,16 +43,27 @@ public:
   bool do_vbf_sel;
   float delta_eta_jj;
 
+  std::vector<std::string> triggers;
+
   // variables that don't get filled at submission time should be
   // protected from being send from the submission node to the worker
   // node (done by the //!)
-public:
+ public:
   // Tree *myTree; //!
   // TH1 *myHist; //!
   TH2F * map_l1; //!
+  TH2F * map_off; //!
   TH2F * map_l1taus; //!
+
   std::map<std::string, TH1F*> hists; //!
 
+  Trig::TrigDecisionTool *m_trigDecisionTool; //!
+  TrigConf::xAODConfigTool *m_trigConfigTool; //!
+
+
+  /* std::map<std::string, EffCurvesTool*> m_curves_tools_nopt;  //! */
+  /* std::map<std::string, EffCurvesTool*> m_curves_tools_nodr;  //! */
+  /* std::map<std::string, EffCurvesTool*> m_curves_tools_final; //! */
   
   // this is a standard constructor
   AcceptanceHadHadTDR ();

@@ -172,6 +172,8 @@ EL::StatusCode L1EmulationLoop :: execute ()
   if (code == StatusCode::FAILURE)
     return EL::StatusCode::FAILURE;
 
+  bool at_least_one_diff = false;
+  std::vector<std::string> decision_lines;
   for (auto it: l1_chains) {
     // emulation decision
     bool emul_passes_event = m_l1_emulationTool->decision(it);
@@ -187,21 +189,33 @@ EL::StatusCode L1EmulationLoop :: execute ()
       h_EMU_fires->Fill(it.c_str(), 1);
 
     if (emul_passes_event != cg_passes_event){
-      Warning("execute", "CHAIN %s: event number %d -- lumi block %d", it.c_str(), (int)ei->eventNumber(), (int) ei->lumiBlock());
-      Warning("execute", "CHAIN %s: TDT: %d -- EMULATION: %d", it.c_str(), (int)cg_passes_event, (int)emul_passes_event);
-      EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(it, l1taus, l1jets, l1muons, l1xe));
+      at_least_one_diff = true;
       h_TDT_EMU_diff->Fill(it.c_str(), 1);
-      // Validator.fill_histograms(ei, l1taus, "TAU12");
-
-      }
+      std::ostringstream decision_line;
+      decision_line << "\t |" << std::setw(43) << it;
+      decision_line << " |  " << std::setw(5) << cg_passes_event ;
+      decision_line << "|   " << std::setw(7) << emul_passes_event;
+      decision_line << "|";
+      decision_lines.push_back(decision_line.str());
     }
-
-
-    // clear the decorations
-    l1taus->clearDecorations();
-    l1jets->clearDecorations();
-    l1muons->clearDecorations();
-    l1xe->clearDecorations();
+  }
+  // print-outs
+  if (at_least_one_diff) {
+    Warning("execute", "event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock());
+    EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(l1taus, l1jets, l1muons, l1xe));
+    // EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintCounters());
+    ATH_MSG_INFO("\t -- Chains with differences --");
+    ATH_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
+    ATH_MSG_INFO("\t |                                      Chain |  TDT  | EMULATION |");
+    for (auto line: decision_lines)
+      ATH_MSG_INFO(line);
+    ATH_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
+  }
+  // clear the decorations
+  l1taus->clearDecorations();
+  l1jets->clearDecorations();
+  l1muons->clearDecorations();
+  l1xe->clearDecorations();
 
 
 
