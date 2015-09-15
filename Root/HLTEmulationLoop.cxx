@@ -1,3 +1,5 @@
+// vim: ts=2 sw=2
+
 #include <EventLoop/Job.h>
 #include <EventLoop/StatusCode.h>
 #include <EventLoop/Worker.h>
@@ -29,17 +31,18 @@
 #include "xAODTracking/TrackParticleContainer.h"
 #include "xAODTracking/TrackParticleAuxContainer.h"
 
+#include "TrigTauEmulation/DecoratedHltTau.h"
 #include "TrigTauEmulation/ToolsRegistry.h"
 
 /// Helper macro for checking xAOD::TReturnCode return values
 #define EL_RETURN_CHECK( CONTEXT, EXP )                     \
   do {                                                     \
-  if( ! EXP.isSuccess() ) {                             \
-  Error( CONTEXT,                                    \
-    XAOD_MESSAGE( "Failed to execute: %s" ),    \
-	 #EXP );                                     \
-  return EL::StatusCode::FAILURE;                    \
-  }                                                     \
+    if( ! EXP.isSuccess() ) {                             \
+      Error( CONTEXT,                                    \
+          XAOD_MESSAGE( "Failed to execute: %s" ),    \
+#EXP );                                     \
+      return EL::StatusCode::FAILURE;                    \
+    }                                                     \
   } while( false )
 
 
@@ -48,18 +51,18 @@ ClassImp(HLTEmulationLoop)
 
 // trim from start
 static inline std::string &ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        return s;
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+  return s;
 }
 
 // trim from end
 static inline std::string &rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-        return s;
+  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  return s;
 }
 
 static inline std::string &trim(std::string &s) {
-        return ltrim(rtrim(s));
+  return ltrim(rtrim(s));
 }
 
 // helper to clear xAOD containers
@@ -138,7 +141,7 @@ EL::StatusCode HLTEmulationLoop :: changeInput (bool /*firstFile*/)
 EL::StatusCode HLTEmulationLoop :: initialize ()
 {
 
-    trigger_condition = TrigDefs::Physics | TrigDefs::allowResurrectedDecision;
+  trigger_condition = TrigDefs::Physics | TrigDefs::allowResurrectedDecision;
 
 
   // Initialize and configure trigger tools
@@ -213,7 +216,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   ATH_MSG_VERBOSE("--------------------------") ;
   ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
   ATH_MSG_VERBOSE("--------------------------") ;
-  
+
   // retrieve the EDM objects
   const xAOD::EventInfo * ei = 0;
   EL_RETURN_CHECK("execute", event->retrieve(ei, "EventInfo"));
@@ -235,10 +238,8 @@ EL::StatusCode HLTEmulationLoop :: execute ()
     return EL::StatusCode::SUCCESS;
   }
 
-  
   auto cg = m_trigDecisionTool->getChainGroup(reference_chain);
   auto features = cg->features(trigger_condition);
-
 
   xAOD::TauJetContainer* presel_taus = new xAOD::TauJetContainer();
   xAOD::TauJetAuxContainer* presel_taus_aux = new xAOD::TauJetAuxContainer();
@@ -252,7 +253,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       presel_taus->push_back(new_tau);
     }
   }
-  
+
   if (tauPreselFeatures.size() != 1)
     return EL::StatusCode::SUCCESS;
 
@@ -262,15 +263,15 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   // 2) ask it directly for the reference chain
   auto preselTracksIsoFeatures  = features.containerFeature<xAOD::TrackParticleContainer>("InDetTrigTrackingxAODCnv_TauIso_FTF");
   auto preselTracksCoreFeatures = features.containerFeature<xAOD::TrackParticleContainer>("InDetTrigTrackingxAODCnv_TauCore_FTF");
-  
+
   xAOD::TrackParticleContainer *preselTracksIso  = new xAOD::TrackParticleContainer();
   xAOD::TrackParticleContainer *preselTracksCore = new xAOD::TrackParticleContainer();
   xAOD::TrackParticleAuxContainer *preselTracksIsoAux  = new xAOD::TrackParticleAuxContainer();
   xAOD::TrackParticleAuxContainer *preselTracksCoreAux = new xAOD::TrackParticleAuxContainer();
-  
+
   preselTracksIso->setStore(preselTracksIsoAux);
   preselTracksCore->setStore(preselTracksCoreAux);
-    
+
   ATH_MSG_VERBOSE("Core Tracks containers size = " << preselTracksCoreFeatures.size());
   ATH_MSG_VERBOSE("Iso Tracks containers size = " << preselTracksIsoFeatures.size());
 
@@ -283,7 +284,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       preselTracksIso->push_back(new_track);
     }
   }
-  
+
   // core tracks
   for(auto &trackContainer: preselTracksCoreFeatures) {
     if(!trackContainer.cptr()) { continue; }
@@ -293,11 +294,12 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       preselTracksCore->push_back(new_track);
     }
   }
-    
+
   xAOD::TauJetContainer* hlt_taus = new xAOD::TauJetContainer();
   xAOD::TauJetAuxContainer* hlt_taus_aux = new xAOD::TauJetAuxContainer();
   hlt_taus->setStore(hlt_taus_aux);
 
+  // TODO: this should be a flag
   std::string tauContainerName = "TrigTauRecMerged";
   // std::string tauContainerName = "TrigTauRecCaloOnly";
   auto tauHltFeatures = features.containerFeature<xAOD::TauJetContainer>(tauContainerName);
@@ -311,19 +313,53 @@ EL::StatusCode HLTEmulationLoop :: execute ()
     }
   }
 
+  // make a bunch of decorated HLT taus
+  std::vector<DecoratedHltTau> decoratedTaus;
+  for (auto &tauContainer: tauHltFeatures) {
+    if (!tauContainer.cptr()) { continue; }
+
+    for(auto tau: *tauContainer.cptr()){
+      xAOD::TauJet *new_tau = new xAOD::TauJet();
+      new_tau->makePrivateStore(tau);
+      DecoratedHltTau d(new_tau);
+
+      //find the iso and core tracks for this guy
+      for(auto &trackContainer: preselTracksIsoFeatures) {
+        if( HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), trackContainer.te()) ){
+          std::cout << "GOT AN Iso MATCH" << std::endl;
+          if(!trackContainer.cptr()) { continue; }
+          d.addPreselTracksIso(trackContainer.cptr());
+        }
+      }
+      
+      for(auto &trackContainer: preselTracksCoreFeatures) {
+        if( HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), trackContainer.te()) ){
+          std::cout << "GOT AN Core MATCH" << std::endl;
+          if(!trackContainer.cptr()) { continue; }
+          d.addPreselTracksCore(trackContainer.cptr());
+        }
+      }
+
+      //std::cout << d << std::endl;
+      decoratedTaus.push_back(d);
+    }
+  }
+
   // EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
   EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
-  
+
   for (auto it: chains_to_test) {
     bool emulation_decision = m_hlt_emulationTool->decision(it);
 
     auto chain_group = m_trigDecisionTool->getChainGroup(trim(it));
     bool cg_passes_event = chain_group->isPassed(trigger_condition);  
-    if(cg_passes_event)
+    if(cg_passes_event) {
       h_TDT_fires->Fill(it.c_str(), 1);
-    
-    if (emulation_decision)
+    }
+
+    if (emulation_decision) {
       h_EMU_fires->Fill(it.c_str(), 1);
+    }
 
     if (emulation_decision != cg_passes_event){
       h_TDT_EMU_diff->Fill(it.c_str(), 1);
@@ -332,15 +368,15 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       // } else { 
       // 	++fire_difference_TDT[it]; 
       // }
-        
+
       // BrokenEventInfo eventInfo(entry, ei->eventNumber(), ei->lumiBlock(), it);
       // brokenEvents.push_back( eventInfo );
       ATH_MSG_INFO("Chain " << it << " is being tested");
       ATH_MSG_INFO(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
       ATH_MSG_INFO(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
       ATH_MSG_INFO("TDT = " << h_TDT_fires->GetBinContent(1) 
-		   << " / EMU = " << h_EMU_fires->GetBinContent(1) 
-		   << " / difference = " << h_TDT_EMU_diff->GetBinContent(1));
+          << " / EMU = " << h_EMU_fires->GetBinContent(1) 
+          << " / difference = " << h_TDT_EMU_diff->GetBinContent(1));
     }
   }
 
@@ -348,7 +384,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   clearContainer(hlt_taus);
   clearContainer(preselTracksIso);
   clearContainer(preselTracksCore);
-  
+
   delete hlt_taus;
   delete presel_taus;
   delete preselTracksIso;
