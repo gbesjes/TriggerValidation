@@ -345,8 +345,8 @@ EL::StatusCode HLTEmulationLoop :: execute ()
     }
   }
 
-  EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
-  //EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, decoratedTaus));
+  //EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
+  EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, decoratedTaus));
 
   for (auto it: chains_to_test) {
     bool emulation_decision = m_hlt_emulationTool->decision(it);
