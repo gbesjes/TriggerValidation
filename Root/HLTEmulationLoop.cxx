@@ -326,7 +326,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       //find the iso and core tracks for this guy
       for(auto &trackContainer: preselTracksIsoFeatures) {
         if( HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), trackContainer.te()) ){
-          std::cout << "GOT AN Iso MATCH" << std::endl;
+          //std::cout << "GOT AN Iso MATCH" << std::endl;
           if(!trackContainer.cptr()) { continue; }
           d.addPreselTracksIso(trackContainer.cptr());
         }
@@ -334,7 +334,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       
       for(auto &trackContainer: preselTracksCoreFeatures) {
         if( HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), trackContainer.te()) ){
-          std::cout << "GOT AN Core MATCH" << std::endl;
+          //std::cout << "GOT AN Core MATCH" << std::endl;
           if(!trackContainer.cptr()) { continue; }
           d.addPreselTracksCore(trackContainer.cptr());
         }
@@ -345,8 +345,8 @@ EL::StatusCode HLTEmulationLoop :: execute ()
     }
   }
 
-  // EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
   EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
+  //EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, decoratedTaus));
 
   for (auto it: chains_to_test) {
     bool emulation_decision = m_hlt_emulationTool->decision(it);
