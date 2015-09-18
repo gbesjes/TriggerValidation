@@ -5,8 +5,6 @@
 
 #include "xAODRootAccess/Init.h"
 #include "xAODRootAccess/TEvent.h"
-#include "xAODRootAccess/tools/ReturnCheck.h"
-#include "xAODRootAccess/tools/Message.h"
 
 #include "AsgTools/MsgStream.h"
 #include "AsgTools/MsgStreamMacros.h"
@@ -14,20 +12,10 @@
 // EDM includes
 #include "xAODEventInfo/EventInfo.h"
 #include "xAODCore/AuxContainerBase.h"
+#include "xAODTruth/TruthParticle.h"
 
 // Local stuff
 #include "TriggerValidation/Utils.h"
-
-/// Helper macro for checking xAOD::TReturnCode return values
-#define EL_RETURN_CHECK( CONTEXT, EXP )                     \
-  do {                                                     \
-  if( ! EXP.isSuccess() ) {                             \
-  Error( CONTEXT,                                    \
-    XAOD_MESSAGE( "Failed to execute: %s" ),    \
-	 #EXP );                                     \
-  return EL::StatusCode::FAILURE;                    \
-  }                                                     \
-  } while( false )
 
 
 // this is needed to distribute the algorithm to the workers
@@ -35,52 +23,36 @@ ClassImp(AcceptanceHadHadTDR)
 
 
 
-AcceptanceHadHadTDR :: AcceptanceHadHadTDR ()
+AcceptanceHadHadTDR :: AcceptanceHadHadTDR () : m_book("book")
 {
-  // Here you put any code for the base initialization of variables,
-  // e.g. initialize all pointers to 0.  Note that you should only put
-  // the most basic initialization here, since this method will be
-  // called on both the submission and the worker node.  Most of your
-  // initialization code will go into histInitialize() and
-  // initialize().
+
 }
 
 
 
 EL::StatusCode AcceptanceHadHadTDR :: setupJob (EL::Job& job)
 {
-  // Here you put code that sets up the job on the submission object
-  // so that it is ready to work with your algorithm, e.g. you can
-  // request the D3PDReader service or add output files.  Any code you
-  // put here could instead also go into the submission script.  The
-  // sole advantage of putting it here is that it gets automatically
-  // activated/deactivated when you add/remove the algorithm from your
-  // job, which may or may not be of value to you.
 
   job.useXAOD ();
-  EL_RETURN_CHECK("setupJob ()", xAOD::Init());
-
+  EL_RETURN_CHECK("setupJob", xAOD::Init());
   return EL::StatusCode::SUCCESS;
-}
 
+}
 
 
 EL::StatusCode AcceptanceHadHadTDR :: histInitialize ()
 {
-  // Here you do everything that needs to be done at the very
-  // beginning on each worker node, e.g. create histograms and output
-  // trees.  This method gets called before any input files are
-  // connected.
 
   hists["cutflow"] = new TH1F("cutflow", "cutflow", 10, 0, 10);
   hists["cutflow"]->GetXaxis()->SetBinLabel(1, "init");
   hists["cutflow"]->GetXaxis()->SetBinLabel(2, "taus");
   hists["cutflow"]->GetXaxis()->SetBinLabel(3, "taus_pt");
   hists["cutflow"]->GetXaxis()->SetBinLabel(4, "dr_tau_tau");
-  hists["cutflow"]->GetXaxis()->SetBinLabel(5, "jets");
-  hists["cutflow"]->GetXaxis()->SetBinLabel(6, "jets_pt");
-  hists["cutflow"]->GetXaxis()->SetBinLabel(7, "deta_jets");
-  hists["cutflow"]->GetXaxis()->SetBinLabel(8, "l1taus");
+  hists["cutflow"]->GetXaxis()->SetBinLabel(5, "truth_matching");
+  hists["cutflow"]->GetXaxis()->SetBinLabel(6, "jets");
+  hists["cutflow"]->GetXaxis()->SetBinLabel(7, "jets_pt");
+  hists["cutflow"]->GetXaxis()->SetBinLabel(8, "deta_jets");
+  hists["cutflow"]->GetXaxis()->SetBinLabel(9, "l1taus");
 
   hists["l1_symmetric"] = new TH1F("l1_symmetric", "l1_symmetric", 
 				   l1_nsteps, l1_min, l1_min + l1_step * l1_nsteps);
@@ -110,22 +82,9 @@ EL::StatusCode AcceptanceHadHadTDR :: histInitialize ()
     map_off->GetYaxis()->SetBinLabel(i + 1, Form("tau%d", (int)thresh_2));
   }
 
-  hists["tau1_pt"]      = new TH1F("h_tau1_pt", "tau1_pt", 40, 20, 100);
-  hists["tau2_pt"]      = new TH1F("h_tau2_pt", "tau2_pt", 40, 20, 100);
-  hists["tau1_eta"]     = new TH1F("h_tau1_eta", "tau1_eta", 10, -2.5, 2.5);
-  hists["tau2_eta"]     = new TH1F("h_tau2_eta", "tau2_eta", 10, -2.5, 1.5);
-  hists["tau1_phi"]     = new TH1F("h_tau1_phi", "tau1_phi", 10, -3.15, 3.15);
-  hists["tau2_phi"]     = new TH1F("h_tau2_phi", "tau2_phi", 10, -3.15, 3.15);
-  hists["tau1_ntracks"] = new TH1F("h_tau1_ntracks", "tau1_ntracks", 5, 0, 5);
-  hists["tau2_ntracks"] = new TH1F("h_tau2_ntracks", "tau2_ntracks", 5, 0, 5);
-
-  hists["jet1_pt"] = new TH1F("h_jet1_pt", "jet1_pt", 40, 20, 100);
-  hists["jet2_pt"] = new TH1F("h_jet2_pt", "jet2_pt", 40, 20, 100);
-  hists["jet1_eta"] = new TH1F("h_jet1_eta", "jet1_eta", 90, -4.5, 4.5);
-  hists["jet2_eta"] = new TH1F("h_jet2_eta", "jet2_eta", 90, -4.5, 4.5);
-  hists["jet1_phi"] = new TH1F("h_jet1_phi", "jet1_phi", 10, -3.15, 3.15);
-  hists["jet2_phi"] = new TH1F("h_jet2_phi", "jet2_phi", 10, -3.15, 3.15);
-
+  m_book.book();
+  m_book.record(wk());
+    
   map_l1taus = new TH2F("map_l1taus", "map_l1taus", 100, 0, 100000, 100, 0, 100000);
   wk()->addOutput (map_l1taus);
   wk()->addOutput (map_l1);
@@ -134,30 +93,8 @@ EL::StatusCode AcceptanceHadHadTDR :: histInitialize ()
   for (const auto it: hists) 
     wk()->addOutput(it.second);
 
- 
- // for (auto trig: triggers) {
- //    ATH_MSG_INFO(trig);
- //    m_curves_tools_nopt[trig] = new EffCurvesTool(trig + "_nopt");
- //    m_curves_tools_nodr[trig] = new EffCurvesTool(trig + "_nodr");
- //    m_curves_tools_final[trig] = new EffCurvesTool(trig + "_final");
- //  }
-
-
-  // for (auto it: m_curves_tools_nopt) 
-  //   for (auto tool: (it.second)->Efficiencies()) 
-  //     wk()->addOutput(tool.second);
-
-  // for (auto it: m_curves_tools_nodr) 
-  //   for (auto tool: (it.second)->Efficiencies()) 
-  //     wk()->addOutput(tool.second);
-
-  // for (auto it: m_curves_tools_final) {
-  //   it.second->record(wk());
-  // }
-
   return EL::StatusCode::SUCCESS;
 }
-
 
 
 EL::StatusCode AcceptanceHadHadTDR :: fileExecute ()
@@ -166,7 +103,6 @@ EL::StatusCode AcceptanceHadHadTDR :: fileExecute ()
   // single file, e.g. collect a list of all lumi-blocks processed
   return EL::StatusCode::SUCCESS;
 }
-
 
 
 EL::StatusCode AcceptanceHadHadTDR :: changeInput (bool/* firstFile*/)
@@ -196,10 +132,20 @@ EL::StatusCode AcceptanceHadHadTDR :: initialize ()
   } else {
     ToolHandle< TrigConf::ITrigConfigTool > trigConfigHandle( m_trigConfigTool );
     m_trigDecisionTool = new Trig::TrigDecisionTool("TrigDecTool");
-    EL_RETURN_CHECK( "initialize", m_trigDecisionTool->setProperty( "ConfigTool", trigConfigHandle ) ); // connect the TrigDecisionTool to the ConfigTool
-    EL_RETURN_CHECK( "initialize", m_trigDecisionTool->setProperty( "TrigDecisionKey", "xTrigDecision" ) );
-    EL_RETURN_CHECK( "initialize", m_trigDecisionTool->initialize() );
+    // connect the TrigDecisionTool to the ConfigTool
+    EL_RETURN_CHECK("initialize", m_trigDecisionTool->setProperty("ConfigTool", trigConfigHandle)); 
+    EL_RETURN_CHECK("initialize", m_trigDecisionTool->setProperty("TrigDecisionKey", "xTrigDecision"));
+    EL_RETURN_CHECK("initialize", m_trigDecisionTool->initialize());
   }
+
+
+  if (asg::ToolStore::contains<TauAnalysisTools::TauTruthMatchingTool>("TauTruthMatchingTool")) {
+    m_t2mt = asg::ToolStore::get<TauAnalysisTools::TauTruthMatchingTool>("TauTruthMatchingTool");
+  } else {
+    m_t2mt = new TauAnalysisTools::TauTruthMatchingTool("TauTruthMatchingTool");
+    EL_RETURN_CHECK("initialize", m_t2mt->initialize());
+  }
+
   xAOD::TEvent* event = wk()->xaodEvent();
   ATH_MSG_INFO("Number of events = " << event->getEntries());
 
@@ -231,6 +177,10 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
   
   const xAOD::JetContainer* jets = 0;
   EL_RETURN_CHECK("execute", event->retrieve(jets, "AntiKt4LCTopoJets"));
+
+
+  // event initialization of the tools (if needed)
+  EL_RETURN_CHECK("execute", m_t2mt->initializeEvent());
 
   xAOD::TauJetContainer* selected_taus = new xAOD::TauJetContainer();
   xAOD::AuxContainerBase* selected_taus_aux = new xAOD::AuxContainerBase();
@@ -264,6 +214,14 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
     return EL::StatusCode::SUCCESS;
 
   hists["cutflow"]->Fill("dr_tau_tau", 1);
+
+
+  const xAOD::TruthParticle* truth_tau1 = m_t2mt->getTruth(*tau1);
+  const xAOD::TruthParticle* truth_tau2 = m_t2mt->getTruth(*tau2);
+  if (truth_tau1 == NULL or truth_tau2 == NULL)
+    return EL::StatusCode::SUCCESS;
+
+  hists["cutflow"]->Fill("truth_matching", 1);
 
   // ATH_MSG_INFO("DR(tau1, tau2) = " << tau1->p4().DeltaR(tau2->p4()));
   
@@ -329,6 +287,7 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
 
   if (selected_l1taus->size() < 2)
     return EL::StatusCode::SUCCESS;
+
   hists["cutflow"]->Fill("l1taus", 1);
   
   xAOD::EmTauRoI* l1tau1 = selected_l1taus->at(0);
@@ -337,52 +296,35 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
   ATH_MSG_DEBUG("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
 
   for (int i = 0; i < l1_nsteps; i++) {
-    int thresh = (int) (l1_min / 1000 + l1_step * i / 1000);
-    if (l1tau1->tauClus() >= 1000 * thresh and l1tau2->tauClus() >= 1000 * thresh)
-      hists["l1_symmetric"]->Fill(Form("2TAU%d", thresh), 1);
+    int thresh_sublead = (int) (l1_min / 1000 + l1_step * i / 1000);
+    if (l1tau1->tauClus() >= 1000 * thresh_sublead and l1tau2->tauClus() >= 1000 * thresh_sublead)
+      hists["l1_symmetric"]->Fill(Form("2TAU%d", thresh_sublead), 1);
     for (int j = i; j < l1_nsteps; j++){
-      int sub_thresh = (int) (l1_min / 1000 + l1_step * j / 1000);
-      if (l1tau1->tauClus() >= 1000 * thresh and l1tau2->tauClus() >= 1000 * sub_thresh)
-    	map_l1->Fill(Form("TAU%d", thresh), Form("TAU%d", sub_thresh), 1);
+      int thresh_lead = (int) (l1_min / 1000 + l1_step * j / 1000);
+      if (l1tau2->tauClus() >= 1000 * thresh_sublead and l1tau1->tauClus() >= 1000 * thresh_lead)
+    	map_l1->Fill(Form("TAU%d", thresh_sublead), Form("TAU%d", thresh_lead), 1);
     }
   }
 
   for (int i = 0; i < off_nsteps; i++) {
-    float thresh_1 = tau1_pt / 1000. + off_step * i / 1000.;
-    if (tau1->pt() >= 1000. * thresh_1 and tau2->pt() >= 1000. * thresh_1)
-      hists["off_symmetric"]->Fill(Form("2tau%d", (int)thresh_1), 1);
+    float thresh_sublead = tau1_pt / 1000. + off_step * i / 1000.;
+    if (tau1->pt() >= 1000. * thresh_sublead and tau2->pt() >= 1000. * thresh_sublead)
+      hists["off_symmetric"]->Fill(Form("2tau%d", (int)thresh_sublead), 1);
     for (int j = i; j < off_nsteps; j++){
-      float thresh_2 = tau2_pt / 1000. + off_step * i / 1000.;
-      if (tau1->pt() >= 1000. * thresh_1 and tau2->pt() >= 1000. * thresh_2)
-    	map_off->Fill(Form("tau%d", (int)thresh_1), Form("tau%d", (int)thresh_2), 1);
+      float thresh_lead = tau1_pt / 1000. + off_step * j / 1000.;
+      if (tau2->pt() >= 1000. * thresh_sublead and tau1->pt() >= 1000. * thresh_lead)
+    	map_off->Fill(Form("tau%d", (int)thresh_sublead), Form("tau%d", (int)thresh_lead), 1);
     }
   }
 
 
   ATH_MSG_DEBUG("Fill kinematics histograms:");
-
-  hists["tau1_pt"]->Fill(tau1->pt() / 1000.);
-  hists["tau2_pt"]->Fill(tau2->pt() / 1000.);
-  hists["tau1_eta"]->Fill(tau1->eta());
-  hists["tau2_eta"]->Fill(tau2->eta());
-  hists["tau1_phi"]->Fill(tau1->phi());
-  hists["tau2_phi"]->Fill(tau2->phi());
-  hists["tau1_ntracks"]->Fill(tau1->nTracks());
-  hists["tau2_ntracks"]->Fill(tau2->nTracks());
-  hists["jet1_pt"]->Fill(jet1->pt() / 1000.);
-  hists["jet2_pt"]->Fill(jet2->pt() / 1000.);
-  hists["jet1_eta"]->Fill(jet1->eta());
-  hists["jet2_eta"]->Fill(jet2->eta());
-  hists["jet1_phi"]->Fill(jet1->phi());
-  hists["jet2_phi"]->Fill(jet2->phi());
+  m_book.fill_tau(tau1, tau2);
+  m_book.fill_jet(jet1, jet2);
+  m_book.fill_truth(truth_tau1, truth_tau2);
 
   map_l1taus->Fill(l1tau1->tauClus(), l1tau2->tauClus());
   
-  // if (l1tau1->tauClus() < 11000)
-  //   return EL::StatusCode::SUCCESS;
-  // if (l1tau2->tauClus() < 11000)
-  //   return EL::StatusCode::SUCCESS;
-
 
   return EL::StatusCode::SUCCESS;
 }
@@ -415,6 +357,9 @@ EL::StatusCode AcceptanceHadHadTDR :: finalize ()
 
   if (m_trigConfigTool)
     delete m_trigConfigTool;
+
+  if (m_t2mt)
+    delete m_t2mt;
 
   return EL::StatusCode::SUCCESS;
 }

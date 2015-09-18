@@ -24,3 +24,7 @@
 #ifdef __CINT__
 #pragma link C++ class AcceptanceHadHadTDR+;
 #endif
+
+#ifdef __CINT__
+#pragma link C++ class HistogramsBook+;
+#endif

@@ -111,10 +111,10 @@ if __name__ == '__main__':
 
     elif args.driver == 'grid':
         driver = ROOT.EL.PrunDriver()
-        driver.options().setString("nc_outputSampleName", "group.phys-higgs.test_prundriver_v1")
+        driver.options().setString("nc_outputSampleName", "group.phys-higgs.acceptance_tdr_v4")
         job.options().setDouble("nc_official", 1);
         job.options().setString("nc_voms", "atlas:/atlas/phys-higgs/Role=production");
-        job.options().setDouble("nc_mergeOutput", 0)
-        driver.options().setDouble("nc_nFilesPerJob", 1)
+        job.options().setDouble("nc_mergeOutput", 1)
+        # driver.options().setDouble("nc_nFilesPerJob", 1)
         driver.options().setDouble("nc_showCmd", 1)
         driver.submitOnly(job, run_dir)
