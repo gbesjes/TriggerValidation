@@ -2,13 +2,17 @@
 #define TriggerValidation_AcceptanceHadHadTDR_H
 
 #include <EventLoop/Algorithm.h>
-#include "TrigConfxAOD/xAODConfigTool.h"
-#include "TrigDecisionTool/TrigDecisionTool.h"
 #include "xAODJet/JetContainer.h"
 #include "xAODTau/TauJetContainer.h"
 #include "xAODTrigger/EmTauRoIContainer.h"
+
+// tools
+#include "TrigConfxAOD/xAODConfigTool.h"
+#include "TrigDecisionTool/TrigDecisionTool.h"
+#include "TauAnalysisTools/TauTruthMatchingTool.h"
+
 // Local stuff
-#include "TriggerValidation/EffCurvesTool.h"
+#include "TriggerValidation/HistogramsBook.h"
 
 #include <map>
 #include "TH1F.h"
@@ -19,6 +23,9 @@ class AcceptanceHadHadTDR : public EL::Algorithm
 {
   // put your configuration variables here as public variables.
   // that way they can be set directly from CINT and python.
+ private:
+  HistogramsBook m_book;
+
  public:
   // float cutValue;
   //
@@ -59,12 +66,8 @@ class AcceptanceHadHadTDR : public EL::Algorithm
 
   Trig::TrigDecisionTool *m_trigDecisionTool; //!
   TrigConf::xAODConfigTool *m_trigConfigTool; //!
+  TauAnalysisTools::TauTruthMatchingTool *m_t2mt; //!
 
-
-  /* std::map<std::string, EffCurvesTool*> m_curves_tools_nopt;  //! */
-  /* std::map<std::string, EffCurvesTool*> m_curves_tools_nodr;  //! */
-  /* std::map<std::string, EffCurvesTool*> m_curves_tools_final; //! */
-  
   // this is a standard constructor
   AcceptanceHadHadTDR ();
 

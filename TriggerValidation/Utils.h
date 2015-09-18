@@ -1,5 +1,8 @@
 #include "AsgTools/MsgStream.h"
 #include "AsgTools/MsgStreamMacros.h"
+#include <EventLoop/StatusCode.h>
+#include "xAODRootAccess/tools/ReturnCheck.h"
+#include "xAODRootAccess/tools/Message.h"
 
 
 #include "xAODBase/IParticle.h"
@@ -9,6 +12,18 @@
 
 #include <vector>
 #include <string>
+
+/// Helper macro for checking xAOD::TReturnCode return values
+#define EL_RETURN_CHECK( CONTEXT, EXP )                     \
+  do {                                                     \
+  if( ! EXP.isSuccess() ) {                             \
+  Error( CONTEXT,                                    \
+    XAOD_MESSAGE( "Failed to execute: %s" ),    \
+	 #EXP );                                     \
+  return EL::StatusCode::FAILURE;                    \
+  }                                                     \
+  } while( false )
+
 
 // Error checking macro
 #define CHECK( ARG )\
