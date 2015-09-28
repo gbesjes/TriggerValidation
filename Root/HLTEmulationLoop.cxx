@@ -340,7 +340,23 @@ EL::StatusCode HLTEmulationLoop :: execute ()
         }
       }
 
-      //std::cout << d << std::endl;
+      for (auto &preselTauContainer: tauPreselFeatures) {
+        if (!preselTauContainer.cptr()) { continue; }
+        if( ! HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), preselTauContainer.te()) ){
+          continue;
+        }
+        
+
+        for (auto preselTau: *preselTauContainer.cptr()) {
+          //NOTE: we assume this is of size 1
+          xAOD::TauJet *new_presel_tau = new xAOD::TauJet();
+          new_presel_tau->makePrivateStore(preselTau);
+
+          d.setCaloOnyTau(new_presel_tau);
+        }
+      }
+
+      std::cout << d << std::endl;
       decoratedTaus.push_back(d);
     }
   }
