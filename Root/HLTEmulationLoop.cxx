@@ -299,10 +299,9 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   xAOD::TauJetAuxContainer* hlt_taus_aux = new xAOD::TauJetAuxContainer();
   hlt_taus->setStore(hlt_taus_aux);
 
-  // TODO: this should be a flag
-  std::string tauContainerName = "TrigTauRecMerged";
-  // std::string tauContainerName = "TrigTauRecCaloOnly";
-  auto tauHltFeatures = features.containerFeature<xAOD::TauJetContainer>(tauContainerName);
+  // TODO: should be a flag
+  std::string hltTauContainerName = "TrigTauRecMerged";
+  auto tauHltFeatures = features.containerFeature<xAOD::TauJetContainer>(hltTauContainerName);
   ATH_MSG_VERBOSE("HLT Tau containers size = " << tauHltFeatures.size());
   for (auto &tauContainer: tauHltFeatures) {
     if (!tauContainer.cptr()) { continue; }
@@ -311,6 +310,16 @@ EL::StatusCode HLTEmulationLoop :: execute ()
       new_tau->makePrivateStore(tau);
       hlt_taus->push_back(new_tau);
     }
+  }
+  
+  std::string caloOnlyTauContainerName = "HLT_xAOD__TauJetContainer_TrigTauRecCaloOnly";
+  std::vector<Trig::AsgFeature<xAOD::TauJetContainer> > tauCaloOnlyFeatures;
+
+  bool hasCaloOnlyTaus = event->contains<xAOD::TauJetContainer>(caloOnlyTauContainerName);
+  ATH_MSG_VERBOSE("hasCaloOnlyTaus = " << hasCaloOnlyTaus);
+  if(hasCaloOnlyTaus){
+    tauCaloOnlyFeatures = features.containerFeature<xAOD::TauJetContainer>(caloOnlyTauContainerName);
+    ATH_MSG_VERBOSE("CaloOnly Tau containers size = " << tauHltFeatures.size());
   }
 
   // make a bunch of decorated HLT taus
@@ -340,17 +349,20 @@ EL::StatusCode HLTEmulationLoop :: execute ()
         }
       }
 
-      for (auto &preselTauContainer: tauPreselFeatures) {
-        if(!preselTauContainer.cptr()) { continue; }
-        if(not HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), preselTauContainer.te()) ){
-          continue;
-        }
-        
-        for (auto preselTau: *preselTauContainer.cptr()) {
-          //NOTE: we assume this is of size 1
-          xAOD::TauJet *new_presel_tau = new xAOD::TauJet();
-          new_presel_tau->makePrivateStore(preselTau);
-          d.setCaloOnyTau(new_presel_tau);
+      if(hasCaloOnlyTaus){
+        for (auto &caloOnlyTauContainer: tauCaloOnlyFeatures) {
+          if(!caloOnlyTauContainer.cptr()) { continue; }
+          if(not HLT::TrigNavStructure::haveCommonRoI(tauContainer.te(), caloOnlyTauContainer.te()) ){
+            continue;
+          }
+          
+          for (auto caloOnlyTau: *caloOnlyTauContainer.cptr()) {
+            //NOTE: we assume this is of size 1
+            xAOD::TauJet *new_caloOnly_tau = new xAOD::TauJet();
+            new_caloOnly_tau->makePrivateStore(caloOnlyTau);
+            d.setCaloOnyTau(new_caloOnly_tau);
+            break;
+          }
         }
       }
 
