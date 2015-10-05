@@ -1,17 +1,20 @@
 #!/usr/bin/env python
+
 import os
 import uuid
 import argparse
+
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
+ROOT.gROOT.SetBatch(True)
 
 from triggers import L1_ITEMS, HLT_ITEMS, list_to_vector
-
 
 if __name__ == '__main__':
     from samples import SAMPLES
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('step', type=str, choices=['l1', 'hlt'], help='Choose l1 or hlt')
+    parser.add_argument('step', type=str.lower, choices=['l1', 'hlt'], help='Choose l1 or hlt (case insensitive)')
     parser.add_argument('sample', type=str, choices=SAMPLES.keys(), help='choose the sample to run over')
     parser.add_argument(
         '--path', type=str, 
@@ -30,7 +33,7 @@ if __name__ == '__main__':
     # if not ROOT.xAOD.Init().isSuccess():
     #     raise RuntimeError
 
-    print 'grab eos samples'
+    print 'Attempting to grab eos samples'
     # Get SampleHandler from EOS
     from eos import get_sample
     sample = get_sample(SAMPLES[args.sample])
