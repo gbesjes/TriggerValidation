@@ -54,7 +54,7 @@ bool match_cont_to_tau(const xAOD::TauJet * tau, const xAOD::TrackParticleContai
   for(auto track: *cont) {
     if (track->p4().DeltaR(tau->p4()) < 0.4)
       return true;
-    }
+  }
   return false;
 }
 
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     "/afs/cern.ch/user/q/qbuat/work/public/"
     "mc15_13TeV/mc15_13TeV.341124.PowhegPythia8EvtGen_CT10_AZNLOCTEQ6L1_ggH125_tautauhh."
     "merge.AOD.e3935_s2608_s2183_r6630_r6264/AOD.05569772._000004.pool.root.1";
- 
+
   std::vector<std::string> filenames;
   if(argc < 2){
     filenames.push_back(std::string(FNAME));
@@ -141,44 +141,44 @@ int main(int argc, char **argv) {
     if ((entry%200)==0)
       ::Info(APP_NAME, "Start processing event %d", (int)entry);
     // ::Info(APP_NAME, "---------- Start processing event %d ----------", (int)entry);
-    
+
     event.getEntry(entry);
-    
+
     // retrieve the EDM objects
     const xAOD::EventInfo * ei = 0;
     CHECK(event.retrieve(ei, "EventInfo"));
-    
+
     const xAOD::TauJetContainer* taus = 0;
     CHECK(event.retrieve(taus, "TauJets"));
-    
+
 
     CHECK(truthMatchTool.initializeEvent());
-    
+
     auto cg = trigDecTool.getChainGroup(trig);
     auto features = cg->features();
-    
+
     auto HltTauFeatures = features.containerFeature<xAOD::TauJetContainer>("TrigTauRecMerged");
     auto preselTracksIsoFeatures  = features.containerFeature<xAOD::TrackParticleContainer>("InDetTrigTrackingxAODCnv_TauIso_FTF");
     auto preselTracksCoreFeatures = features.containerFeature<xAOD::TrackParticleContainer>("InDetTrigTrackingxAODCnv_TauCore_FTF");
-    
+
     if (HltTauFeatures.size() != 1)
       continue;
 
-    
+
     for (const auto tau: *taus) {
-      
+
       auto* truth_tau = truthMatchTool.applyTruthMatch(*tau);
       if (truth_tau == NULL)
-	continue;
+        continue;
 
       auto* hlt_tau = trigTauMatchingTool.getHLT(tau, trig);
 
       if (hlt_tau == 0)
-	continue;
+        continue;
 
       // ::Info(APP_NAME, "tau %d: pt = %f, eta = %f, phi = %f", 
       // 	     (int)tau->index(), (float)tau->pt(), (float)tau->eta(), (float)tau->phi());
-      
+
 
       auto ftf_core_cont = preselTracksCoreFeatures[0].cptr();
       auto ftf_iso_cont = preselTracksIsoFeatures[0].cptr();
@@ -222,17 +222,17 @@ int main(int argc, char **argv) {
       // ::Info(APP_NAME, "FTF Core features = %d / FTF Iso features = %d", (int)preselTracksCoreFeatures.size(), (int)preselTracksIsoFeatures.size());
       // ::Info(APP_NAME, "FTF Core size = %d / FTF Iso size = %d", (int)ftf_core_cont->size(), (int)ftf_iso_cont->size());
       if (ftf_iso_cont->size() == 0) {
-	::Info(APP_NAME, "FTF Core size = %d / FTF Iso size = %d", (int)ftf_core_cont->size(), (int)ftf_iso_cont->size());
-	::Info(APP_NAME, "Truth tau %d: nprongs = %d", (int)truth_tau->index(), (int)truth_tau->auxdata<size_t>("numCharged"));
-	::Info(APP_NAME, "Tau %d: ntracks = %d", (int)tau->index(), (int)tau->nTracks());
-	for (auto tr: *ftf_core_cont) 
-	  ::Info(APP_NAME, "track %d: pt = %f, eta = %f, phi = %f, d0 = %f", (int)tr->index(), (float)tr->pt(), (float)tr->eta(), (float)tr->phi(), (float)tr->d0());
-	tau_pt->Fill(tau->pt() / 1000.);
-	tau_eta->Fill(tau->eta());
-	tau_phi->Fill(tau->phi());
-	tau_ntracks->Fill(tau->nTracks());
-	tau_nprongs->Fill(truth_tau->auxdata<size_t>("numCharged"));
-	tau_nftf_core->Fill(ftf_core_cont->size());
+        ::Info(APP_NAME, "FTF Core size = %d / FTF Iso size = %d", (int)ftf_core_cont->size(), (int)ftf_iso_cont->size());
+        ::Info(APP_NAME, "Truth tau %d: nprongs = %d", (int)truth_tau->index(), (int)truth_tau->auxdata<size_t>("numCharged"));
+        ::Info(APP_NAME, "Tau %d: ntracks = %d", (int)tau->index(), (int)tau->nTracks());
+        for (auto tr: *ftf_core_cont) 
+          ::Info(APP_NAME, "track %d: pt = %f, eta = %f, phi = %f, d0 = %f", (int)tr->index(), (float)tr->pt(), (float)tr->eta(), (float)tr->phi(), (float)tr->d0());
+        tau_pt->Fill(tau->pt() / 1000.);
+        tau_eta->Fill(tau->eta());
+        tau_phi->Fill(tau->phi());
+        tau_ntracks->Fill(tau->nTracks());
+        tau_nprongs->Fill(truth_tau->auxdata<size_t>("numCharged"));
+        tau_nftf_core->Fill(ftf_core_cont->size());
       }
       map->Fill((int)ftf_core_cont->size(), (int)ftf_iso_cont->size());
 

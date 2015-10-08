@@ -7,6 +7,7 @@
 #include "TrigTauEmulation/Level1EmulationTool.h"
 #include "TrigTauEmulation/HltEmulationTool.h"
 #include "TrigTauEmulation/ToolsRegistry.h"
+#include "TrigTauEmulation/ChainRegistry.h"
 #include "TH1F.h"
 
 #include "xAODTau/TauJet.h"
@@ -38,7 +39,8 @@ public:
   TrigTauEmul::Level1EmulationTool * m_l1_emulationTool; //!
   TrigTauEmul::HltEmulationTool * m_hlt_emulationTool; //!
 
-  ToolsRegistry * m_registry; //!
+  ToolsRegistry* m_registry; //!
+  ChainRegistry* m_chainRegistry; //!
 
 
   // this is a standard constructor
