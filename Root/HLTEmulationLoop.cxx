@@ -178,10 +178,6 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
     EL_RETURN_CHECK("initialize", m_registry->initialize());
   }
 
-  if (asg::ToolStore::contains<EmTauSelectionTool>("TAU12IM")) {
-    std::cout << "found TAU12IM" << std::endl;
-  }
-  
   if (asg::ToolStore::contains<TrigTauEmul::Level1EmulationTool>("Level1TrigTauEmulator")) {
     m_l1_emulationTool = asg::ToolStore::get<TrigTauEmul::Level1EmulationTool>("Level1TrigTauEmulator");
   } else {

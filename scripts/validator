@@ -22,7 +22,7 @@ if __name__ == '__main__':
         help='default = %(default)s')
     parser.add_argument('--run-dir', type=str, default=None, help='default = %(default)s')
     parser.add_argument('--l1-trig', type=str, default=None, help='default = %(default)s')
-    parser.add_argument('--hlt-trig', type=str, default=None, help='default = %(default)s')
+    parser.add_argument('--hlt-trig', type=str, action='append', default=None, help='default = %(default)s')
     parser.add_argument('--hlt-ref-trig', type=str, default='HLT_tau25_idperf_tracktwo', help='default = %(default)s')
     parser.add_argument('--verbose', default=False, action='store_true', help='default = %(default)s')
     parser.add_argument('--num-events', default=-1, type=int, help='default = %(default)s')
@@ -40,11 +40,11 @@ if __name__ == '__main__':
     sample.printContent()
     sample.setMetaString ("nc_tree", "CollectionTree")
     
-    # sh = ROOT.SH.SampleHandler()
-    # path = ROOT.gSystem.ExpandPathName(args.path)
-    # ROOT.SH.ScanDir().sampleDepth(0).scan(sh, path)
-    # sh.setMetaString ("nc_tree", "CollectionTree")
-    # sh.printContent()
+    #sh = ROOT.SH.SampleHandler()
+    #path = ROOT.gSystem.ExpandPathName("/tmp/gbesjes")
+    #ROOT.SH.ScanDir().sampleDepth(0).scan(sh, path)
+    #sh.setMetaString ("nc_tree", "CollectionTree")
+    #sh.printContent()
     
     if args.l1_trig != None:
         L1_TRIGGERS = [args.l1_trig]
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         L1_TRIGGERS = L1_ITEMS
 
     if args.hlt_trig != None:
-        HLT_TRIGGERS = [args.hlt_trig]
+        HLT_TRIGGERS = args.hlt_trig
     else:
         HLT_TRIGGERS = HLT_ITEMS
 
@@ -75,6 +75,7 @@ if __name__ == '__main__':
     # Setup the EventLoop Job
     job = ROOT.EL.Job()
     job.sampleHandler(sample)
+    #job.sampleHandler(sh)
     job.algsAdd(alg)
 
     if args.num_events > 0:
