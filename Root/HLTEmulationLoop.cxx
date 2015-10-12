@@ -31,6 +31,8 @@
 #include "xAODTracking/TrackParticleContainer.h"
 #include "xAODTracking/TrackParticleAuxContainer.h"
 
+#include "TrigTauEmulation/EmTauSelectionTool.h"
+
 #include "TrigTauEmulation/DecoratedHltTau.h"
 #include "TrigTauEmulation/ToolsRegistry.h"
 
@@ -223,6 +225,11 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   ATH_MSG_VERBOSE("--------------------------") ;
   ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
   ATH_MSG_VERBOSE("--------------------------") ;
+  
+  //for (auto extension : m_registry->selectExtensions<IEmTauSelectionTool*>()) { 
+  for (auto extension : m_registry->selectExtensionsOfBaseType<IEmTauSelectionTool*>()) { 
+    std::cout << "GOT EXTENSION " << extension->name() << std::endl; 
+  } 
 
   // retrieve the EDM objects
   const xAOD::EventInfo * ei = 0;
