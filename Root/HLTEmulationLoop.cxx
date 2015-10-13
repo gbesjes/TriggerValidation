@@ -226,10 +226,12 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
   ATH_MSG_VERBOSE("--------------------------") ;
   
-  //for (auto extension : m_registry->selectExtensions<IEmTauSelectionTool*>()) { 
-  for (auto extension : m_registry->selectExtensionsOfBaseType<IEmTauSelectionTool*>()) { 
-    std::cout << "GOT EXTENSION " << extension->name() << std::endl; 
-  } 
+  //for (auto extension : m_registry->selectExtensions<EmTauSelectionTool*>()) {
+    //std::cout << "GOT EXTENSION " << extension->name() << std::endl; 
+  //}
+  //for (auto extension : m_registry->selectExtensionsOfBaseType<IEmTauSelectionTool*>()) { 
+    //std::cout << "GOT BASE EXTENSION " << extension->name() << std::endl; 
+  //} 
 
   // retrieve the EDM objects
   const xAOD::EventInfo * ei = 0;
