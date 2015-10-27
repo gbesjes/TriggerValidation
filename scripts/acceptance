@@ -63,8 +63,8 @@ if __name__ == '__main__':
     alg.l1_step = 1000
     alg.tau1_pt = 20000
     alg.tau2_pt = 20000
-    alg.off_step = 2000
-    alg.off_nsteps = 30
+    alg.off_step = 5000
+    alg.off_nsteps = 20
     alg.min_dr_tautau = 0.8
     alg.max_dr_tautau = 2.4
     alg.n_jets = 2
@@ -111,9 +111,10 @@ if __name__ == '__main__':
 
     elif args.driver == 'grid':
         driver = ROOT.EL.PrunDriver()
-        driver.options().setString("nc_outputSampleName", "group.phys-higgs.acceptance_tdr_v4")
+        driver.options().setString("nc_outputSampleName", "group.phys-higgs.acceptance_tdr_v9")
         job.options().setDouble("nc_official", 1);
         job.options().setString("nc_voms", "atlas:/atlas/phys-higgs/Role=production");
+        driver.options().setString('nc_excludedSite', 'ANALY_IN2P3-CC,ANALY_IN2P3-CC-T2_HIMEM')
         job.options().setDouble("nc_mergeOutput", 1)
         # driver.options().setDouble("nc_nFilesPerJob", 1)
         driver.options().setDouble("nc_showCmd", 1)

@@ -71,12 +71,12 @@ EL::StatusCode AcceptanceHadHadTDR :: histInitialize ()
   }
 
   map_off =  new TH2F("off_asymmetric", "off_asymmetric", 
-		      off_nsteps, tau1_pt, tau1_pt + off_step * off_nsteps,
-		      off_nsteps, tau2_pt, tau2_pt + off_step * off_nsteps);
+		      off_nsteps, tau2_pt, tau2_pt + off_step * off_nsteps,
+		      off_nsteps, tau1_pt, tau1_pt + off_step * off_nsteps);
   
   for (int i = 0; i < off_nsteps; i++) {
     float thresh_1 = tau1_pt / 1000. + off_step * i / 1000.;
-    float thresh_2 = tau1_pt / 1000. + off_step * i / 1000.;
+    float thresh_2 = tau2_pt / 1000. + off_step * i / 1000.;
     hists["off_symmetric"]->GetXaxis()->SetBinLabel(i + 1, Form("2tau%d", (int)thresh_1));
     map_off->GetXaxis()->SetBinLabel(i + 1, Form("tau%d", (int)thresh_1));
     map_off->GetYaxis()->SetBinLabel(i + 1, Form("tau%d", (int)thresh_2));
@@ -158,6 +158,8 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
 {
 
   xAOD::TEvent* event = wk()->xaodEvent();
+  xAOD::TStore* store = wk()->xaodStore();
+
   ATH_MSG_DEBUG("execute next event");
   if ((wk()->treeEntry() % 200) == 0)
     ATH_MSG_INFO("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
@@ -302,18 +304,18 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
     for (int j = i; j < l1_nsteps; j++){
       int thresh_lead = (int) (l1_min / 1000 + l1_step * j / 1000);
       if (l1tau2->tauClus() >= 1000 * thresh_sublead and l1tau1->tauClus() >= 1000 * thresh_lead)
-    	map_l1->Fill(Form("TAU%d", thresh_sublead), Form("TAU%d", thresh_lead), 1);
+    	map_l1->Fill(Form("TAU%d", thresh_lead), Form("TAU%d", thresh_sublead), 1);
     }
   }
 
   for (int i = 0; i < off_nsteps; i++) {
-    float thresh_sublead = tau1_pt / 1000. + off_step * i / 1000.;
+    float thresh_sublead = tau2_pt / 1000. + off_step * i / 1000.;
     if (tau1->pt() >= 1000. * thresh_sublead and tau2->pt() >= 1000. * thresh_sublead)
       hists["off_symmetric"]->Fill(Form("2tau%d", (int)thresh_sublead), 1);
     for (int j = i; j < off_nsteps; j++){
       float thresh_lead = tau1_pt / 1000. + off_step * j / 1000.;
       if (tau2->pt() >= 1000. * thresh_sublead and tau1->pt() >= 1000. * thresh_lead)
-    	map_off->Fill(Form("tau%d", (int)thresh_sublead), Form("tau%d", (int)thresh_lead), 1);
+    	map_off->Fill(Form("tau%d", (int)thresh_lead), Form("tau%d", (int)thresh_sublead), 1);
     }
   }
 
@@ -325,6 +327,14 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
 
   map_l1taus->Fill(l1tau1->tauClus(), l1tau2->tauClus());
   
+  EL_RETURN_CHECK("execute", store->record(selected_jets, "SelectedJets"));
+  EL_RETURN_CHECK("execute", store->record(selected_jets_aux, "SelectedJetsAux."));
+
+  EL_RETURN_CHECK("execute", store->record(selected_taus, "SelectedTaus"));
+  EL_RETURN_CHECK("execute", store->record(selected_taus_aux, "SelectedTausAux."));
+
+  EL_RETURN_CHECK("execute", store->record(selected_l1taus, "SelectedL1Taus"));
+  EL_RETURN_CHECK("execute", store->record(selected_l1taus_aux, "SelectedL1TausAux."));
 
   return EL::StatusCode::SUCCESS;
 }
@@ -343,23 +353,20 @@ EL::StatusCode AcceptanceHadHadTDR :: postExecute ()
 
 EL::StatusCode AcceptanceHadHadTDR :: finalize ()
 {
-  // This method is the mirror image of initialize(), meaning it gets
-  // called after the last event has been processed on the worker node
-  // and allows you to finish up any objects you created in
-  // initialize() before they are written to disk.  This is actually
-  // fairly rare, since this happens separately for each worker node.
-  // Most of the time you want to do your post-processing on the
-  // submission node after all your histogram outputs have been
-  // merged.  This is different from histFinalize() in that it only
-  // gets called on worker nodes that processed input events.
-  if (m_trigDecisionTool) 
+  if (m_trigDecisionTool) {
+    m_trigDecisionTool = NULL;
     delete m_trigDecisionTool;
+  }
 
-  if (m_trigConfigTool)
+  if (m_trigConfigTool) {
+    m_trigConfigTool = NULL;
     delete m_trigConfigTool;
+  }
 
-  if (m_t2mt)
+  if (m_t2mt) {
+    m_t2mt = NULL;
     delete m_t2mt;
+  }
 
   return EL::StatusCode::SUCCESS;
 }
