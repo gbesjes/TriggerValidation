@@ -181,8 +181,9 @@ EL::StatusCode L1EmulationLoop :: execute ()
     // TDT decision
     auto chain_group = m_trigDecisionTool->getChainGroup(it);
     bool cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
+    bool cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
    
-    if(cg_passes_event)
+    if(cg_passes_event or cg_passes_event_1)
       h_TDT_fires->Fill(it.c_str(), 1);
     
     if (emul_passes_event)

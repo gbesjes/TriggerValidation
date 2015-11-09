@@ -329,7 +329,8 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   }
   
   std::string caloOnlyTauContainerName = "HLT_xAOD__TauJetContainer_TrigTauRecCaloOnly";
-  std::vector<Trig::AsgFeature<xAOD::TauJetContainer> > tauCaloOnlyFeatures;
+  decltype(features.containerFeature<xAOD::TauJetContainer>()) tauCaloOnlyFeatures;
+  // std::vector<Trig::AsgFeature<xAOD::TauJetContainer> > tauCaloOnlyFeatures;
 
   bool hasCaloOnlyTaus = event->contains<xAOD::TauJetContainer>(caloOnlyTauContainerName);
   ATH_MSG_VERBOSE("hasCaloOnlyTaus = " << hasCaloOnlyTaus);
