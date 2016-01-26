@@ -32,7 +32,6 @@
 #include "xAODTracking/TrackParticleAuxContainer.h"
 
 #include "TrigTauEmulation/DecoratedHltTau.h"
-#include "TrigTauEmulation/ToolsRegistry.h"
 
 /// Helper macro for checking xAOD::TReturnCode return values
 #define EL_RETURN_CHECK( CONTEXT, EXP )                     \
@@ -162,6 +161,11 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
     EL_RETURN_CHECK("initialize", m_trigDecisionTool->initialize());
   }
 
+  if (asg::ToolStore::contains<ChainRegistry>("ChainRegistry")) {
+    m_ch_registry = asg::ToolStore::get<ChainRegistry>("ChainRegistry");
+  } else {
+    m_ch_registry = new ChainRegistry("ChainRegistry");
+  }
   if(asg::ToolStore::contains<ToolsRegistry>("ToolsRegistry")) {
     m_registry = asg::ToolStore::get<ToolsRegistry>("ToolsRegistry");
   } else {
@@ -176,10 +180,10 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
   } else {
     m_l1_emulationTool = new TrigTauEmul::Level1EmulationTool("Level1TrigTauEmulator");
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("l1_chains", l1_chains));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
+    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
+    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
+    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
+    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->initialize());
   }
 
@@ -191,7 +195,7 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("hlt_chains", chains_to_test));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("PerformL1Emulation", true));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("Level1EmulationTool", handle));
-    EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("HltTauTools", m_registry->GetHltTauTools()));
+    // EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("HltTauTools", m_registry->GetHltTauTools()));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("TrigDecTool", "TrigDecTool"));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("L1TriggerCondition", trigger_condition));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("HLTTriggerCondition", trigger_condition));

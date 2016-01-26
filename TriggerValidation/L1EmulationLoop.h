@@ -6,6 +6,7 @@
 #include "TrigDecisionTool/TrigDecisionTool.h"
 #include "TrigTauEmulation/Level1EmulationTool.h"
 #include "TrigTauEmulation/ToolsRegistry.h"
+#include "TrigTauEmulation/ChainRegistry.h"
 
 #include "TH1F.h"
 
@@ -22,6 +23,8 @@ public:
 
   TrigTauEmul::Level1EmulationTool * m_l1_emulationTool; //!
   ToolsRegistry * m_registry; //!
+  ChainRegistry *m_ch_registry; //!
+
   // variables that don't get filled at submission time should be
   // protected from being send from the submission node to the worker
   // node (done by the //!)
