@@ -42,20 +42,14 @@ L1EmulationLoop :: L1EmulationLoop ()
 { 
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: setupJob (EL::Job& job)
-{
+EL::StatusCode L1EmulationLoop :: setupJob (EL::Job& job) {
   job.useXAOD ();
   EL_RETURN_CHECK("setupJob ()", xAOD::Init());
 
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: histInitialize ()
-{
+EL::StatusCode L1EmulationLoop :: histInitialize () {
 
   h_TDT_EMU_diff = new TH1F("h_TDT_Emulation_differences", "TDT_Emulation_differences", l1_chains.size(), 0, l1_chains.size());
   h_TDT_fires = new TH1F("h_TDT_fires", "TDT_fires_total_number", l1_chains.size(), 0, l1_chains.size());
@@ -75,24 +69,15 @@ EL::StatusCode L1EmulationLoop :: histInitialize ()
   return EL::StatusCode::SUCCESS;
 }
 
-
-EL::StatusCode L1EmulationLoop :: fileExecute ()
-{
+EL::StatusCode L1EmulationLoop :: fileExecute () {
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: changeInput (bool /*firstFile*/)
-{
+EL::StatusCode L1EmulationLoop :: changeInput (bool /*firstFile*/) {
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: initialize ()
-{
-
+EL::StatusCode L1EmulationLoop :: initialize () { 
 
   // Initialize and configure trigger tools
   if (asg::ToolStore::contains<TrigConf::xAODConfigTool>("xAODConfigTool")) {
@@ -142,10 +127,7 @@ EL::StatusCode L1EmulationLoop :: initialize ()
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: execute ()
-{
+EL::StatusCode L1EmulationLoop :: execute () {
 
   xAOD::TEvent* event = wk()->xaodEvent();
   ATH_MSG_VERBOSE("--------------------------") ;
@@ -182,13 +164,15 @@ EL::StatusCode L1EmulationLoop :: execute ()
     bool cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
     bool cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
    
-    if(cg_passes_event or cg_passes_event_1)
+    if(cg_passes_event or cg_passes_event_1) {
       h_TDT_fires->Fill(it.c_str(), 1);
+    }
     
-    if (emul_passes_event)
+    if (emul_passes_event) {
       h_EMU_fires->Fill(it.c_str(), 1);
+    }
 
-    if (emul_passes_event != cg_passes_event){
+    if (emul_passes_event != cg_passes_event) {
       at_least_one_diff = true;
       h_TDT_EMU_diff->Fill(it.c_str(), 1);
       std::ostringstream decision_line;
@@ -217,9 +201,6 @@ EL::StatusCode L1EmulationLoop :: execute ()
   l1muons->clearDecorations();
   l1xe->clearDecorations();
 
-
-
-
   // Here you do everything that needs to be done on every single
   // events, e.g. read input variables, apply cuts, and fill
   // histograms and trees.  This is where most of your actual analysis
@@ -227,20 +208,14 @@ EL::StatusCode L1EmulationLoop :: execute ()
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: postExecute ()
-{
+EL::StatusCode L1EmulationLoop :: postExecute () {
   // Here you do everything that needs to be done after the main event
   // processing.  This is typically very rare, particularly in user
   // code.  It is mainly used in implementing the NTupleSvc.
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: finalize ()
-{
+EL::StatusCode L1EmulationLoop :: finalize () {
 
   if( m_trigConfigTool ) {
     m_trigConfigTool = nullptr;
@@ -261,13 +236,9 @@ EL::StatusCode L1EmulationLoop :: finalize ()
     delete m_l1_emulationTool;
   }
 
-
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: histFinalize ()
-{
+EL::StatusCode L1EmulationLoop :: histFinalize () {
   return EL::StatusCode::SUCCESS;
 }
