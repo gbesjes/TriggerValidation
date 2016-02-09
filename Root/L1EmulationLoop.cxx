@@ -114,7 +114,6 @@ EL::StatusCode L1EmulationLoop :: initialize ()
     EL_RETURN_CHECK( "initialize", m_trigDecisionTool->initialize() );
   }
 
-
   if(asg::ToolStore::contains<ToolsRegistry>("ToolsRegistry")) {
     m_registry = asg::ToolStore::get<ToolsRegistry>("ToolsRegistry");
   } else {
@@ -128,10 +127,10 @@ EL::StatusCode L1EmulationLoop :: initialize ()
   } else {
     m_l1_emulationTool = new TrigTauEmul::Level1EmulationTool("Level1TrigTauEmulator");
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("l1_chains", l1_chains));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
-    EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->initialize());
     m_l1_emulationTool->msg().setLevel(this->msg().level());
   }
