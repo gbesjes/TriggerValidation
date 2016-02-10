@@ -19,6 +19,7 @@
 #include "xAODTrigger/EnergySumRoI.h"
 
 #include "TrigTauEmulation/ToolsRegistry.h"
+#include "TrigTauEmulation/MsgStream.h"
 
 /// Helper macro for checking xAOD::TReturnCode return values
 #define EL_RETURN_CHECK( CONTEXT, EXP )                     \
@@ -42,20 +43,14 @@ L1EmulationLoop :: L1EmulationLoop ()
 { 
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: setupJob (EL::Job& job)
-{
+EL::StatusCode L1EmulationLoop :: setupJob (EL::Job& job) {
   job.useXAOD ();
   EL_RETURN_CHECK("setupJob ()", xAOD::Init());
 
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: histInitialize ()
-{
+EL::StatusCode L1EmulationLoop :: histInitialize () {
 
   h_TDT_EMU_diff = new TH1F("h_TDT_Emulation_differences", "TDT_Emulation_differences", l1_chains.size(), 0, l1_chains.size());
   h_TDT_fires = new TH1F("h_TDT_fires", "TDT_fires_total_number", l1_chains.size(), 0, l1_chains.size());
@@ -75,24 +70,15 @@ EL::StatusCode L1EmulationLoop :: histInitialize ()
   return EL::StatusCode::SUCCESS;
 }
 
-
-EL::StatusCode L1EmulationLoop :: fileExecute ()
-{
+EL::StatusCode L1EmulationLoop :: fileExecute () {
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: changeInput (bool /*firstFile*/)
-{
+EL::StatusCode L1EmulationLoop :: changeInput (bool /*firstFile*/) {
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: initialize ()
-{
-
+EL::StatusCode L1EmulationLoop :: initialize () { 
 
   // Initialize and configure trigger tools
   if (asg::ToolStore::contains<TrigConf::xAODConfigTool>("xAODConfigTool")) {
@@ -133,30 +119,27 @@ EL::StatusCode L1EmulationLoop :: initialize ()
   } else {
     m_l1_emulationTool = new TrigTauEmul::Level1EmulationTool("Level1TrigTauEmulator");
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("l1_chains", l1_chains));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->initialize());
     m_l1_emulationTool->msg().setLevel(this->msg().level());
   }
 
   xAOD::TEvent* event = wk()->xaodEvent();
 
-  ATH_MSG_INFO("Number of events = " << event->getEntries());
+  MY_MSG_INFO("Number of events = " << event->getEntries());
 
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: execute ()
-{
+EL::StatusCode L1EmulationLoop :: execute () {
 
   xAOD::TEvent* event = wk()->xaodEvent();
-  ATH_MSG_VERBOSE("--------------------------") ;
-  ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
-  ATH_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+  MY_MSG_VERBOSE("--------------------------") ;
 
   const xAOD::EventInfo* ei = 0;
   EL_RETURN_CHECK("execute", event->retrieve(ei, "EventInfo"));  
@@ -188,13 +171,15 @@ EL::StatusCode L1EmulationLoop :: execute ()
     bool cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
     bool cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
    
-    if(cg_passes_event or cg_passes_event_1)
+    if(cg_passes_event or cg_passes_event_1) {
       h_TDT_fires->Fill(it.c_str(), 1);
+    }
     
-    if (emul_passes_event)
+    if (emul_passes_event) {
       h_EMU_fires->Fill(it.c_str(), 1);
+    }
 
-    if (emul_passes_event != cg_passes_event){
+    if (emul_passes_event != cg_passes_event) {
       at_least_one_diff = true;
       h_TDT_EMU_diff->Fill(it.c_str(), 1);
       std::ostringstream decision_line;
@@ -210,21 +195,18 @@ EL::StatusCode L1EmulationLoop :: execute ()
     Warning("execute", "event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock());
     EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(l1taus, l1jets, l1muons, l1xe));
     // EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintCounters());
-    ATH_MSG_INFO("\t -- Chains with differences --");
-    ATH_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
-    ATH_MSG_INFO("\t |                                      Chain |  TDT  | EMULATION |");
+    MY_MSG_INFO("\t -- Chains with differences --");
+    MY_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
+    MY_MSG_INFO("\t |                                      Chain |  TDT  | EMULATION |");
     for (auto line: decision_lines)
-      ATH_MSG_INFO(line);
-    ATH_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
+      MY_MSG_INFO(line);
+    MY_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
   }
   // clear the decorations
   l1taus->clearDecorations();
   l1jets->clearDecorations();
   l1muons->clearDecorations();
   l1xe->clearDecorations();
-
-
-
 
   // Here you do everything that needs to be done on every single
   // events, e.g. read input variables, apply cuts, and fill
@@ -233,20 +215,14 @@ EL::StatusCode L1EmulationLoop :: execute ()
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: postExecute ()
-{
+EL::StatusCode L1EmulationLoop :: postExecute () {
   // Here you do everything that needs to be done after the main event
   // processing.  This is typically very rare, particularly in user
   // code.  It is mainly used in implementing the NTupleSvc.
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: finalize ()
-{
+EL::StatusCode L1EmulationLoop :: finalize () {
 
   if( m_trigConfigTool ) {
     m_trigConfigTool = nullptr;
@@ -267,13 +243,9 @@ EL::StatusCode L1EmulationLoop :: finalize ()
     delete m_l1_emulationTool;
   }
 
-
   return EL::StatusCode::SUCCESS;
 }
 
-
-
-EL::StatusCode L1EmulationLoop :: histFinalize ()
-{
+EL::StatusCode L1EmulationLoop :: histFinalize () {
   return EL::StatusCode::SUCCESS;
 }

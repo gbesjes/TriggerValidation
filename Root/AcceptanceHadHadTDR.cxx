@@ -16,7 +16,7 @@
 
 // Local stuff
 #include "TriggerValidation/Utils.h"
-
+#include "TrigTauEmulation/MsgStream.h"
 
 // this is needed to distribute the algorithm to the workers
 ClassImp(AcceptanceHadHadTDR)
@@ -147,7 +147,7 @@ EL::StatusCode AcceptanceHadHadTDR :: initialize ()
   }
 
   xAOD::TEvent* event = wk()->xaodEvent();
-  ATH_MSG_INFO("Number of events = " << event->getEntries());
+  MY_MSG_INFO("Number of events = " << event->getEntries());
 
   return EL::StatusCode::SUCCESS;
 }
@@ -160,9 +160,9 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
   xAOD::TEvent* event = wk()->xaodEvent();
   xAOD::TStore* store = wk()->xaodStore();
 
-  ATH_MSG_DEBUG("execute next event");
+  MY_MSG_DEBUG("execute next event");
   if ((wk()->treeEntry() % 200) == 0)
-    ATH_MSG_INFO("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+    MY_MSG_INFO("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
 
 
   hists["cutflow"]->Fill("init", 1);
@@ -225,14 +225,14 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
 
   hists["cutflow"]->Fill("truth_matching", 1);
 
-  // ATH_MSG_INFO("DR(tau1, tau2) = " << tau1->p4().DeltaR(tau2->p4()));
+  // MY_MSG_INFO("DR(tau1, tau2) = " << tau1->p4().DeltaR(tau2->p4()));
   
   xAOD::JetContainer* selected_jets = new xAOD::JetContainer();
   xAOD::AuxContainerBase* selected_jets_aux = new xAOD::AuxContainerBase();
   selected_jets->setStore(selected_jets_aux);
   select_jets(selected_jets, jets, tau1, tau2);
 
-  // ATH_MSG_INFO("Number of jets = " << selected_jets->size());
+  // MY_MSG_INFO("Number of jets = " << selected_jets->size());
   if ((int)selected_jets->size() < n_jets)
     return EL::StatusCode::SUCCESS;
 
@@ -265,7 +265,7 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
     }      
       
     // for (auto trig: triggers) {
-    //   ATH_MSG_INFO(trig);
+    //   MY_MSG_INFO(trig);
     //   bool pass = m_trigDecisionTool->isPassed(trig);
     //   m_curves_tools_final[trig]->fill_hadhad(pass, tau1, tau2, selected_jets->at(0));
     // }
@@ -295,7 +295,7 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
   xAOD::EmTauRoI* l1tau1 = selected_l1taus->at(0);
   xAOD::EmTauRoI* l1tau2 = selected_l1taus->at(1);
 
-  ATH_MSG_DEBUG("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+  MY_MSG_DEBUG("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
 
   for (int i = 0; i < l1_nsteps; i++) {
     int thresh_sublead = (int) (l1_min / 1000 + l1_step * i / 1000);
@@ -320,7 +320,7 @@ EL::StatusCode AcceptanceHadHadTDR :: execute ()
   }
 
 
-  ATH_MSG_DEBUG("Fill kinematics histograms:");
+  MY_MSG_DEBUG("Fill kinematics histograms:");
   m_book.fill_tau(tau1, tau2);
   m_book.fill_jet(jet1, jet2);
   m_book.fill_truth(truth_tau1, truth_tau2);
@@ -398,29 +398,29 @@ EL::StatusCode AcceptanceHadHadTDR :: select_taus(xAOD::TauJetContainer *selecte
 
     // pt cut
     if (tau->pt() < 20000.) {
-      ATH_MSG_DEBUG("Reject tau " << tau->index() << " with pt = " << tau->pt());
+      MY_MSG_DEBUG("Reject tau " << tau->index() << " with pt = " << tau->pt());
       continue;
     }
 
     // eta cut
     if (fabs(tau->eta()) > 2.5) {
-      ATH_MSG_DEBUG("Reject tau " << tau->index() << " with eta = " << tau->eta());
+      MY_MSG_DEBUG("Reject tau " << tau->index() << " with eta = " << tau->eta());
       continue;
     }
 
     if (fabs(tau->eta()) > 1.37 and fabs(tau->eta()) < 1.52) {
-      ATH_MSG_DEBUG("Reject tau " << tau->index() << " with eta = " << tau->eta());
+      MY_MSG_DEBUG("Reject tau " << tau->index() << " with eta = " << tau->eta());
       continue;
     }
       
     // 1 or 3 tracks
     if (tau->nTracks() != 1 and tau->nTracks() != 3) {
-      ATH_MSG_DEBUG("Reject tau " << tau->index() << " with nTracks = " << tau->nTracks());
+      MY_MSG_DEBUG("Reject tau " << tau->index() << " with nTracks = " << tau->nTracks());
       continue;
     }
     // ID cut
     if (not tau->isTau(xAOD::TauJetParameters::JetBDTSigMedium)) {
-      ATH_MSG_DEBUG("Reject tau " << tau->index() << " with medium ID = " << tau->isTau(xAOD::TauJetParameters::JetBDTSigMedium));
+      MY_MSG_DEBUG("Reject tau " << tau->index() << " with medium ID = " << tau->isTau(xAOD::TauJetParameters::JetBDTSigMedium));
       continue;
     }      
       // selectDec(*tau) = true;

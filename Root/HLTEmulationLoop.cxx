@@ -31,7 +31,11 @@
 #include "xAODTracking/TrackParticleContainer.h"
 #include "xAODTracking/TrackParticleAuxContainer.h"
 
+#include "TrigTauEmulation/EmTauSelectionTool.h"
+
 #include "TrigTauEmulation/DecoratedHltTau.h"
+#include "TrigTauEmulation/ToolsRegistry.h"
+#include "TrigTauEmulation/MsgStream.h"
 
 /// Helper macro for checking xAOD::TReturnCode return values
 #define EL_RETURN_CHECK( CONTEXT, EXP )                     \
@@ -142,7 +146,6 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
 
   trigger_condition = TrigDefs::Physics | TrigDefs::allowResurrectedDecision;
 
-
   // Initialize and configure trigger tools
   if (asg::ToolStore::contains<TrigConf::xAODConfigTool>("xAODConfigTool")) {
     m_trigConfigTool = asg::ToolStore::get<TrigConf::xAODConfigTool>("xAODConfigTool");
@@ -159,6 +162,14 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
     EL_RETURN_CHECK("initialize", m_trigDecisionTool->setProperty("ConfigTool", trigConfigHandle));
     EL_RETURN_CHECK("initialize", m_trigDecisionTool->setProperty("TrigDecisionKey", "xTrigDecision"));
     EL_RETURN_CHECK("initialize", m_trigDecisionTool->initialize());
+  }
+  
+  if(asg::ToolStore::contains<ChainRegistry>("ChainRegistry")) {
+    m_chainRegistry = asg::ToolStore::get<ChainRegistry>("ChainRegistry");
+  } else {
+    m_chainRegistry = new ChainRegistry("ChainRegistry");
+    m_chainRegistry->msg().setLevel(this->msg().level());
+    EL_RETURN_CHECK("initialize", m_chainRegistry->initialize());
   }
 
   if (asg::ToolStore::contains<ChainRegistry>("ChainRegistry")) {
@@ -180,11 +191,12 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
   } else {
     m_l1_emulationTool = new TrigTauEmul::Level1EmulationTool("Level1TrigTauEmulator");
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("l1_chains", l1_chains));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
-    // EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("JetTools", m_registry->GetL1JetTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("EmTauTools", m_registry->GetL1TauTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("XeTools", m_registry->GetL1XeTools()));
+    //EL_RETURN_CHECK("initialize", m_l1_emulationTool->setProperty("MuonTools", m_registry->GetL1MuonTools()));
     EL_RETURN_CHECK("initialize", m_l1_emulationTool->initialize());
+    m_l1_emulationTool->msg().setLevel(MSG::VERBOSE);
   }
 
   if (asg::ToolStore::contains<TrigTauEmul::HltEmulationTool>("HltTrigTauEmulator")) {
@@ -195,19 +207,18 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("hlt_chains", chains_to_test));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("PerformL1Emulation", true));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("Level1EmulationTool", handle));
-    // EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("HltTauTools", m_registry->GetHltTauTools()));
+    //EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("HltTauTools", m_registry->GetHltTauTools()));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("TrigDecTool", "TrigDecTool"));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("L1TriggerCondition", trigger_condition));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->setProperty("HLTTriggerCondition", trigger_condition));
     EL_RETURN_CHECK("initialize", m_hlt_emulationTool->initialize());
-    // m_hlt_emulationTool->msg().setLevel(MSG::DEBUG);
+    m_hlt_emulationTool->msg().setLevel(MSG::VERBOSE);
   }
 
   xAOD::TEvent* event = wk()->xaodEvent();
 
-  // ATH_MSG_INFO("Number of events = " << event->getEntries());
+  // MY_MSG_INFO("Number of events = " << event->getEntries());
   Info("initialize()", "Number of events = %lli", event->getEntries());
-
 
   return EL::StatusCode::SUCCESS;
 }
@@ -217,9 +228,16 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
 EL::StatusCode HLTEmulationLoop :: execute ()
 {
   xAOD::TEvent* event = wk()->xaodEvent();
-  ATH_MSG_VERBOSE("--------------------------") ;
-  ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
-  ATH_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+  MY_MSG_VERBOSE("--------------------------") ;
+  
+  //for (auto extension : m_registry->selectExtensions<EmTauSelectionTool*>()) {
+    //std::cout << "GOT EXTENSION " << extension->name() << std::endl; 
+  //}
+  //for (auto extension : m_registry->selectExtensionsOfBaseType<IEmTauSelectionTool*>()) { 
+    //std::cout << "GOT BASE EXTENSION " << extension->name() << std::endl; 
+  //} 
 
   // retrieve the EDM objects
   const xAOD::EventInfo * ei = 0;
@@ -276,8 +294,8 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   preselTracksIso->setStore(preselTracksIsoAux);
   preselTracksCore->setStore(preselTracksCoreAux);
 
-  ATH_MSG_VERBOSE("Core Tracks containers size = " << preselTracksCoreFeatures.size());
-  ATH_MSG_VERBOSE("Iso Tracks containers size = " << preselTracksIsoFeatures.size());
+  MY_MSG_VERBOSE("Core Tracks containers size = " << preselTracksCoreFeatures.size());
+  MY_MSG_VERBOSE("Iso Tracks containers size = " << preselTracksIsoFeatures.size());
 
   // iso tracks
   for(auto &trackContainer: preselTracksIsoFeatures) {
@@ -306,7 +324,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   // TODO: should be a flag
   std::string hltTauContainerName = "TrigTauRecMerged";
   auto tauHltFeatures = features.containerFeature<xAOD::TauJetContainer>(hltTauContainerName);
-  ATH_MSG_VERBOSE("HLT Tau containers size = " << tauHltFeatures.size());
+  MY_MSG_VERBOSE("HLT Tau containers size = " << tauHltFeatures.size());
   for (auto &tauContainer: tauHltFeatures) {
     if (!tauContainer.cptr()) { continue; }
     for (auto tau: *tauContainer.cptr()) {
@@ -321,10 +339,10 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   // std::vector<Trig::AsgFeature<xAOD::TauJetContainer> > tauCaloOnlyFeatures;
 
   bool hasCaloOnlyTaus = event->contains<xAOD::TauJetContainer>(caloOnlyTauContainerName);
-  ATH_MSG_VERBOSE("hasCaloOnlyTaus = " << hasCaloOnlyTaus);
+  MY_MSG_VERBOSE("hasCaloOnlyTaus = " << hasCaloOnlyTaus);
   if(hasCaloOnlyTaus){
     tauCaloOnlyFeatures = features.containerFeature<xAOD::TauJetContainer>(caloOnlyTauContainerName);
-    ATH_MSG_VERBOSE("CaloOnly Tau containers size = " << tauHltFeatures.size());
+    MY_MSG_VERBOSE("CaloOnly Tau containers size = " << tauHltFeatures.size());
   }
 
   // make a bunch of decorated HLT taus
@@ -379,33 +397,35 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   //EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, hlt_taus, preselTracksIso, preselTracksCore));
   EL_RETURN_CHECK("execute", m_hlt_emulationTool->execute(l1taus, l1jets, l1muons, l1xe, decoratedTaus));
 
-  for (auto it: chains_to_test) {
-    bool emulation_decision = m_hlt_emulationTool->decision(it);
+  //for (auto it: chains_to_test) {
+  for(auto &ch: m_hlt_emulationTool->getHltChains()) {
+    auto name = ch.first;
+    bool emulation_decision = m_hlt_emulationTool->decision(name);
 
-    auto chain_group = m_trigDecisionTool->getChainGroup(trim(it));
+    auto chain_group = m_trigDecisionTool->getChainGroup(trim(name));
     bool cg_passes_event = chain_group->isPassed(trigger_condition);  
     if(cg_passes_event) {
-      h_TDT_fires->Fill(it.c_str(), 1);
+      h_TDT_fires->Fill(name.c_str(), 1);
     }
 
     if (emulation_decision) {
-      h_EMU_fires->Fill(it.c_str(), 1);
+      h_EMU_fires->Fill(name.c_str(), 1);
     }
 
     if (emulation_decision != cg_passes_event){
-      h_TDT_EMU_diff->Fill(it.c_str(), 1);
+      h_TDT_EMU_diff->Fill(name.c_str(), 1);
       // if(emulation_decision) { 
-      // 	++fire_difference_emu[it]; 
+      // 	++fire_difference_emu[name]; 
       // } else { 
-      // 	++fire_difference_TDT[it]; 
+      // 	++fire_difference_TDT[name]; 
       // }
 
-      // BrokenEventInfo eventInfo(entry, ei->eventNumber(), ei->lumiBlock(), it);
+      // BrokenEventInfo eventInfo(entry, ei->eventNumber(), ei->lumiBlock(), name);
       // brokenEvents.push_back( eventInfo );
-      ATH_MSG_INFO("Chain " << it << " is being tested");
-      ATH_MSG_INFO(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
-      ATH_MSG_INFO(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
-      ATH_MSG_INFO("TDT = " << h_TDT_fires->GetBinContent(1) 
+      MY_MSG_INFO("Chain " << name << " is being tested");
+      MY_MSG_INFO(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
+      MY_MSG_INFO(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
+      MY_MSG_INFO("TDT = " << h_TDT_fires->GetBinContent(1) 
           << " / EMU = " << h_EMU_fires->GetBinContent(1) 
           << " / difference = " << h_TDT_EMU_diff->GetBinContent(1));
     }
