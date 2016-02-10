@@ -19,6 +19,7 @@
 #include "xAODTrigger/EnergySumRoI.h"
 
 #include "TrigTauEmulation/ToolsRegistry.h"
+#include "TrigTauEmulation/MsgStream.h"
 
 /// Helper macro for checking xAOD::TReturnCode return values
 #define EL_RETURN_CHECK( CONTEXT, EXP )                     \
@@ -122,7 +123,7 @@ EL::StatusCode L1EmulationLoop :: initialize () {
 
   xAOD::TEvent* event = wk()->xaodEvent();
 
-  ATH_MSG_INFO("Number of events = " << event->getEntries());
+  MY_MSG_INFO("Number of events = " << event->getEntries());
 
   return EL::StatusCode::SUCCESS;
 }
@@ -130,9 +131,9 @@ EL::StatusCode L1EmulationLoop :: initialize () {
 EL::StatusCode L1EmulationLoop :: execute () {
 
   xAOD::TEvent* event = wk()->xaodEvent();
-  ATH_MSG_VERBOSE("--------------------------") ;
-  ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
-  ATH_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+  MY_MSG_VERBOSE("--------------------------") ;
 
   const xAOD::EventInfo* ei = 0;
   EL_RETURN_CHECK("execute", event->retrieve(ei, "EventInfo"));  
@@ -188,12 +189,12 @@ EL::StatusCode L1EmulationLoop :: execute () {
     Warning("execute", "event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock());
     EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintReport(l1taus, l1jets, l1muons, l1xe));
     // EL_RETURN_CHECK("execute", m_l1_emulationTool->PrintCounters());
-    ATH_MSG_INFO("\t -- Chains with differences --");
-    ATH_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
-    ATH_MSG_INFO("\t |                                      Chain |  TDT  | EMULATION |");
+    MY_MSG_INFO("\t -- Chains with differences --");
+    MY_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
+    MY_MSG_INFO("\t |                                      Chain |  TDT  | EMULATION |");
     for (auto line: decision_lines)
-      ATH_MSG_INFO(line);
-    ATH_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
+      MY_MSG_INFO(line);
+    MY_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
   }
   // clear the decorations
   l1taus->clearDecorations();

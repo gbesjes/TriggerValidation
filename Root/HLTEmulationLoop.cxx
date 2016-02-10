@@ -35,6 +35,7 @@
 
 #include "TrigTauEmulation/DecoratedHltTau.h"
 #include "TrigTauEmulation/ToolsRegistry.h"
+#include "TrigTauEmulation/MsgStream.h"
 
 /// Helper macro for checking xAOD::TReturnCode return values
 #define EL_RETURN_CHECK( CONTEXT, EXP )                     \
@@ -211,7 +212,7 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
 
   xAOD::TEvent* event = wk()->xaodEvent();
 
-  // ATH_MSG_INFO("Number of events = " << event->getEntries());
+  // MY_MSG_INFO("Number of events = " << event->getEntries());
   Info("initialize()", "Number of events = %lli", event->getEntries());
 
   return EL::StatusCode::SUCCESS;
@@ -222,9 +223,9 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
 EL::StatusCode HLTEmulationLoop :: execute ()
 {
   xAOD::TEvent* event = wk()->xaodEvent();
-  ATH_MSG_VERBOSE("--------------------------") ;
-  ATH_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
-  ATH_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("--------------------------") ;
+  MY_MSG_VERBOSE("Read event number "<< wk()->treeEntry() << " / " << event->getEntries());
+  MY_MSG_VERBOSE("--------------------------") ;
   
   //for (auto extension : m_registry->selectExtensions<EmTauSelectionTool*>()) {
     //std::cout << "GOT EXTENSION " << extension->name() << std::endl; 
@@ -288,8 +289,8 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   preselTracksIso->setStore(preselTracksIsoAux);
   preselTracksCore->setStore(preselTracksCoreAux);
 
-  ATH_MSG_VERBOSE("Core Tracks containers size = " << preselTracksCoreFeatures.size());
-  ATH_MSG_VERBOSE("Iso Tracks containers size = " << preselTracksIsoFeatures.size());
+  MY_MSG_VERBOSE("Core Tracks containers size = " << preselTracksCoreFeatures.size());
+  MY_MSG_VERBOSE("Iso Tracks containers size = " << preselTracksIsoFeatures.size());
 
   // iso tracks
   for(auto &trackContainer: preselTracksIsoFeatures) {
@@ -318,7 +319,7 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   // TODO: should be a flag
   std::string hltTauContainerName = "TrigTauRecMerged";
   auto tauHltFeatures = features.containerFeature<xAOD::TauJetContainer>(hltTauContainerName);
-  ATH_MSG_VERBOSE("HLT Tau containers size = " << tauHltFeatures.size());
+  MY_MSG_VERBOSE("HLT Tau containers size = " << tauHltFeatures.size());
   for (auto &tauContainer: tauHltFeatures) {
     if (!tauContainer.cptr()) { continue; }
     for (auto tau: *tauContainer.cptr()) {
@@ -333,10 +334,10 @@ EL::StatusCode HLTEmulationLoop :: execute ()
   // std::vector<Trig::AsgFeature<xAOD::TauJetContainer> > tauCaloOnlyFeatures;
 
   bool hasCaloOnlyTaus = event->contains<xAOD::TauJetContainer>(caloOnlyTauContainerName);
-  ATH_MSG_VERBOSE("hasCaloOnlyTaus = " << hasCaloOnlyTaus);
+  MY_MSG_VERBOSE("hasCaloOnlyTaus = " << hasCaloOnlyTaus);
   if(hasCaloOnlyTaus){
     tauCaloOnlyFeatures = features.containerFeature<xAOD::TauJetContainer>(caloOnlyTauContainerName);
-    ATH_MSG_VERBOSE("CaloOnly Tau containers size = " << tauHltFeatures.size());
+    MY_MSG_VERBOSE("CaloOnly Tau containers size = " << tauHltFeatures.size());
   }
 
   // make a bunch of decorated HLT taus
@@ -416,10 +417,10 @@ EL::StatusCode HLTEmulationLoop :: execute ()
 
       // BrokenEventInfo eventInfo(entry, ei->eventNumber(), ei->lumiBlock(), name);
       // brokenEvents.push_back( eventInfo );
-      ATH_MSG_INFO("Chain " << name << " is being tested");
-      ATH_MSG_INFO(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
-      ATH_MSG_INFO(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
-      ATH_MSG_INFO("TDT = " << h_TDT_fires->GetBinContent(1) 
+      MY_MSG_INFO("Chain " << name << " is being tested");
+      MY_MSG_INFO(Form("event number %d -- lumi block %d", (int)ei->eventNumber(), (int) ei->lumiBlock()));
+      MY_MSG_INFO(Form("TDT AND EMULATION DECISION DIFFERENT. TDT: %d -- EMULATION: %d", (int)cg_passes_event, (int)emulation_decision));
+      MY_MSG_INFO("TDT = " << h_TDT_fires->GetBinContent(1) 
           << " / EMU = " << h_EMU_fires->GetBinContent(1) 
           << " / difference = " << h_TDT_EMU_diff->GetBinContent(1));
     }
