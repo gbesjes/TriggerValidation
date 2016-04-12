@@ -1,3 +1,5 @@
+#include <TriggerValidation/TauTrackLink.h>
+
 #include <TriggerValidation/AcceptanceHadHadTDR.h>
 
 #include <TriggerValidation/HLTEmulationLoop.h>
@@ -27,4 +29,8 @@
 
 #ifdef __CINT__
 #pragma link C++ class HistogramsBook+;
+#endif
+
+#ifdef __CINT__
+#pragma link C++ class TauTrackLink+;
 #endif

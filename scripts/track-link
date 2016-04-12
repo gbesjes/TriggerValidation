@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+import os
+import uuid
+import argparse
+
+import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
+ROOT.gROOT.SetBatch(True)
+
+from triggers import L1_ITEMS, HLT_ITEMS, list_to_vector
+
+if __name__ == '__main__':
+    from samples import SAMPLES
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('sample', type=str, choices=SAMPLES.keys(), help='choose the sample to run over')
+    parser.add_argument('--run-dir', type=str, default=None, help='default = %(default)s')
+    parser.add_argument('--num-events', default=-1, type=int, help='default = %(default)s')
+    args = parser.parse_args()
+
+    ROOT.gROOT.Macro('$ROOTCOREDIR/scripts/load_packages.C')
+
+    # if not ROOT.xAOD.Init().isSuccess():
+    #     raise RuntimeError
+
+    print 'Attempting to grab eos samples'
+    # Get SampleHandler from EOS
+    from eos import get_sample
+    sample = get_sample(SAMPLES[args.sample])
+    sample.printContent()
+    sample.setMetaString ("nc_tree", "CollectionTree")
+    
+    #sh = ROOT.SH.SampleHandler()
+    #path = ROOT.gSystem.ExpandPathName("/tmp/gbesjes")
+    #ROOT.SH.ScanDir().sampleDepth(0).scan(sh, path)
+    #sh.setMetaString ("nc_tree", "CollectionTree")
+    #sh.printContent()
+    
+
+
+    alg = ROOT.TauTrackLink()
+    alg.SetName('TauTrackLink')
+
+    # Setup the EventLoop Job
+    job = ROOT.EL.Job()
+    job.sampleHandler(sample)
+    #job.sampleHandler(sh)
+    job.algsAdd(alg)
+
+    if args.num_events > 0:
+      job.options().setDouble(ROOT.EL.Job.optMaxEvents, args.num_events)
+
+    # define the run dir
+    if args.run_dir == None:
+        run_dir = 'run_' + uuid.uuid4().hex
+    else:
+        run_dir = args.run_dir
+        
+    # run, run, run!
+    driver = ROOT.EL.DirectDriver()
+    driver.submit(job, run_dir)
+

@@ -172,11 +172,6 @@ EL::StatusCode HLTEmulationLoop :: initialize ()
     EL_RETURN_CHECK("initialize", m_chainRegistry->initialize());
   }
 
-  if (asg::ToolStore::contains<ChainRegistry>("ChainRegistry")) {
-    m_ch_registry = asg::ToolStore::get<ChainRegistry>("ChainRegistry");
-  } else {
-    m_ch_registry = new ChainRegistry("ChainRegistry");
-  }
   if(asg::ToolStore::contains<ToolsRegistry>("ToolsRegistry")) {
     m_registry = asg::ToolStore::get<ToolsRegistry>("ToolsRegistry");
   } else {
