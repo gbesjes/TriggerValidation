@@ -14,12 +14,12 @@ if __name__ == '__main__':
     from samples import SAMPLES
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('step', type=str.lower, choices=['l1', 'hlt'], help='Choose l1 or hlt (case insensitive)')
-    parser.add_argument('sample', type=str, choices=SAMPLES.keys(), help='choose the sample to run over')
+    parser.add_argument('step', type=str.lower, choices=['l1', 'hlt', 'L1', 'HLT'], help='Choose l1 or hlt (case insensitive)')
+    parser.add_argument('--sample', type=str, choices=SAMPLES.keys(), help='choose the sample to run over', default=None)
     parser.add_argument(
-        '--path', type=str, 
-        default='/afs/cern.ch/user/q/qbuat/work/public/mc15_13TeV/test/', 
-        help='default = %(default)s')
+        '--path', type=str, default=None)
+        #default='/afs/cern.ch/user/q/qbuat/work/public/mc15_13TeV/test/', 
+        #help='default = %(default)s')
     parser.add_argument('--run-dir', type=str, default=None, help='default = %(default)s')
     parser.add_argument('--l1-trig', type=str, default=None, help='default = %(default)s')
     parser.add_argument('--hlt-trig', type=str, action='append', default=None, help='default = %(default)s')
@@ -33,18 +33,30 @@ if __name__ == '__main__':
     # if not ROOT.xAOD.Init().isSuccess():
     #     raise RuntimeError
 
-    print 'Attempting to grab eos samples'
-    # Get SampleHandler from EOS
-    from eos import get_sample
-    sample = get_sample(SAMPLES[args.sample])
-    sample.printContent()
-    sample.setMetaString ("nc_tree", "CollectionTree")
+    # Sanity check on path
+    if args.path is not None:
+        if not os.path.exists(args.path):
+            print "Path {0} doesn't exist - ignoring".format(args.path)
+            args.path = None
+
+    if args.sample is not None and args.path is not None:
+        print "Cannot use both --sample and --path"
+        sys.exit()
+
+    if args.sample is not None:
+        print 'Attempting to grab eos samples'
+        # Get SampleHandler from EOS
+        from eos import get_sample
+        sample = get_sample(SAMPLES[args.sample])
+        sample.printContent()
+        sample.setMetaString ("nc_tree", "CollectionTree")
     
-    #sh = ROOT.SH.SampleHandler()
-    #path = ROOT.gSystem.ExpandPathName("/tmp/gbesjes")
-    #ROOT.SH.ScanDir().sampleDepth(0).scan(sh, path)
-    #sh.setMetaString ("nc_tree", "CollectionTree")
-    #sh.printContent()
+    if args.path is not None:
+        sh = ROOT.SH.SampleHandler()
+        path = ROOT.gSystem.ExpandPathName(args.path)
+        ROOT.SH.ScanDir().sampleDepth(0).scan(sh, path)
+        sh.setMetaString ("nc_tree", "CollectionTree")
+        sh.printContent()
     
     if args.l1_trig != None:
         L1_TRIGGERS = [args.l1_trig]
