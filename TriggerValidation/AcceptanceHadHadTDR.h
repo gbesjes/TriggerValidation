@@ -1,6 +1,7 @@
 #ifndef TriggerValidation_AcceptanceHadHadTDR_H
 #define TriggerValidation_AcceptanceHadHadTDR_H
 
+
 #include <EventLoop/Algorithm.h>
 #include "xAODJet/JetContainer.h"
 #include "xAODTau/TauJetContainer.h"

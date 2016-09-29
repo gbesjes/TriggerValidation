@@ -1,3 +1,4 @@
+
 #include "TriggerValidation/EffCurvesTool.h"
 
 EffCurvesTool::EffCurvesTool(const std::string & name)

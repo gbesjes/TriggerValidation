@@ -1,0 +1,8 @@
+BasedOnStyle: google
+AllowShortFunctionsOnASingleLine: Empty
+IndentWidth: 4
+TabWidth: 4
+AlignAfterOpenBracket: true
+AccessModifierOffset: -2
+ColumnLimit: 130
+NamespaceIndentation: All

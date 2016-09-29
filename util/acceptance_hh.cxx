@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
       // if (jet->pt() < 50000.) 
       // 	continue;
 
-      if (fabs(jet->eta() > 3.2))
+      if (fabs(jet->eta()) > 3.2)
 	continue;
 
       if (overlapAcc(*jet))
