@@ -145,6 +145,34 @@ EL::StatusCode L1EmulationLoop::execute() {
         // emulation decision
         bool emul_passes_event = m_l1_emulationTool->decision(it);
 
+        if (m_l1_emulationTool->decision(it)) {
+            const auto type = m_l1_emulationTool->getTopoType(it);
+            if (type != "") {
+                std::cout << type << std::endl;
+                const auto combinations = m_l1_emulationTool->topoCombinations(it);
+                for (const auto& c : combinations) {
+                    if (type == "tau-tau-jet") {
+                        std::cout << c[0] << " " << c[1] << " " << c[2] << std::endl;
+                        const auto tau1 = l1taus->at(c[0]);
+                        const auto tau2 = l1taus->at(c[1]);
+                        const auto jet = l1jets->at(c[2]);
+
+                        std::cout << "tau1 = " << tau1 << std::endl;
+                        std::cout << "tau2 = " << tau2 << std::endl;
+                        std::cout << "jet = " << jet << std::endl;
+
+                        std::cout << "tau1 eta=" << tau1->eta() << std::endl;
+                        std::cout << "tau2 eta=" << tau2->eta() << std::endl;
+                        std::cout << "jet eta=" << jet->eta() << std::endl;
+                        std::cout << "-------" << std::endl;
+                    }
+                }
+                // for(const auto& p: m_l1_emulationTool->topoCombinations(it)) {
+                // std::cout << p << std::endl;
+                //}
+            }
+        }
+
         // TDT decision
         auto chain_group = m_trigDecisionTool->getChainGroup(it);
         bool cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;

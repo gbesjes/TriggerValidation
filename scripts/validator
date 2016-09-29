@@ -52,11 +52,11 @@ if __name__ == '__main__':
         sample.setMetaString ("nc_tree", "CollectionTree")
     
     if args.path is not None:
-        sh = ROOT.SH.SampleHandler()
+        sample = ROOT.SH.SampleHandler()
         path = ROOT.gSystem.ExpandPathName(args.path)
-        ROOT.SH.ScanDir().sampleDepth(0).scan(sh, path)
-        sh.setMetaString ("nc_tree", "CollectionTree")
-        sh.printContent()
+        ROOT.SH.ScanDir().sampleDepth(0).scan(sample, path)
+        sample.setMetaString ("nc_tree", "CollectionTree")
+        sample.printContent()
     
     if args.l1_trig != None:
         L1_TRIGGERS = [args.l1_trig]
