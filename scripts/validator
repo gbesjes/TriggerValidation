@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('step', type=str.lower, choices=['l1', 'hlt', 'L1', 'HLT'], help='Choose l1 or hlt (case insensitive)')
     parser.add_argument('--sample', type=str, choices=SAMPLES.keys(), help='choose the sample to run over', default=None)
     parser.add_argument(
-        '--path', type=str, default=None)
+        '--path', type=str, default=None, help="Path to full sample to run over non-default samples")
         #default='/afs/cern.ch/user/q/qbuat/work/public/mc15_13TeV/test/', 
         #help='default = %(default)s')
     parser.add_argument('--run-dir', type=str, default=None, help='default = %(default)s')
