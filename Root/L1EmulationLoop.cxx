@@ -111,6 +111,20 @@ EL::StatusCode L1EmulationLoop::initialize() {
     xAOD::TEvent* event = wk()->xaodEvent();
 
     MY_MSG_INFO("Number of events = " << event->getEntries());
+    
+    // Set some counters to aid our retrieval
+    m_nEmTauTools = m_registry->getNumberOfTools<EmTauSelectionTool *>();
+    m_nJetTools = m_registry->getNumberOfTools<JetRoISelectionTool *>();
+    m_nMuonTools = m_registry->getNumberOfTools<MuonRoISelectionTool *>();
+    m_nEnergySumTools = m_registry->getNumberOfTools<EnergySumSelectionTool *>();
+
+    ATH_MSG_INFO("Registry says:"
+                 << " #(tau tools) = " << m_nEmTauTools
+                 << " #(jet tools) = " << m_nJetTools
+                 << " #(muon tools) = " << m_nMuonTools
+                 << " #(MET tools) = " << m_nEnergySumTools
+            ); 
+
 
     return EL::StatusCode::SUCCESS;
 }
@@ -125,16 +139,26 @@ EL::StatusCode L1EmulationLoop::execute() {
     EL_RETURN_CHECK("execute", event->retrieve(ei, "EventInfo"));
 
     const xAOD::EmTauRoIContainer* l1taus = 0;
-    EL_RETURN_CHECK("execute", event->retrieve(l1taus, "LVL1EmTauRoIs"));
+    if(m_nEmTauTools > 0) {
+        EL_RETURN_CHECK("execute", event->retrieve(l1taus, "LVL1EmTauRoIs"));
+    }
 
     const xAOD::JetRoIContainer* l1jets = 0;
-    EL_RETURN_CHECK("execute", event->retrieve(l1jets, "LVL1JetRoIs"));
+    if(m_nJetTools > 0) {
+        EL_RETURN_CHECK("execute", event->retrieve(l1jets, "LVL1JetRoIs"));
+    }
 
     const xAOD::MuonRoIContainer* l1muons = 0;
-    EL_RETURN_CHECK("execute", event->retrieve(l1muons, "LVL1MuonRoIs"));
-
+    if(m_nMuonTools > 0) {
+        EL_RETURN_CHECK("execute", event->retrieve(l1muons, "LVL1MuonRoIs"));
+    }
+    
     const xAOD::EnergySumRoI* l1xe = 0;
-    EL_RETURN_CHECK("execute", event->retrieve(l1xe, "LVL1EnergySumRoI"));
+    if(m_nEnergySumTools > 0) {
+        EL_RETURN_CHECK("execute", event->retrieve(l1xe, "LVL1EnergySumRoI"));
+    }
+
+    //ATH_MSG_INFO("Got: taus: " << l1taus << " jets " << l1jets << " muons " << l1muons << " xe " << l1xe);
 
     StatusCode code = m_l1_emulationTool->calculate(l1taus, l1jets, l1muons, l1xe);
     if (code == StatusCode::FAILURE) return EL::StatusCode::FAILURE;
@@ -174,9 +198,16 @@ EL::StatusCode L1EmulationLoop::execute() {
         }
 
         // TDT decision
-        auto chain_group = m_trigDecisionTool->getChainGroup(it);
-        bool cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
-        bool cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
+        bool cg_passes_event = false;
+        bool cg_passes_event_1 = false;
+        if(m_trigDecisionTool->getListOfTriggers(it).size() == 0) {
+            ATH_MSG_DEBUG("Chain " << it << " doesn't exist in TDT!");
+        } else {
+            //ATH_MSG_INFO("size = " << m_trigDecisionTool->getListOfTriggers(it).size());
+            //auto chain_group = m_trigDecisionTool->getChainGroup(it);
+            //cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
+            //cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
+        }
 
         if (cg_passes_event or cg_passes_event_1) {
             h_TDT_fires->Fill(it.c_str(), 1);
@@ -209,10 +240,18 @@ EL::StatusCode L1EmulationLoop::execute() {
         MY_MSG_INFO("\t +--------------------------------------------+-------+-----------+");
     }
     // clear the decorations
-    l1taus->clearDecorations();
-    l1jets->clearDecorations();
-    l1muons->clearDecorations();
-    l1xe->clearDecorations();
+    if(l1taus) {
+        l1taus->clearDecorations();
+    }
+    if(l1jets) { 
+        l1jets->clearDecorations();
+    }
+    if(l1muons) {
+        l1muons->clearDecorations();
+    }
+    if(l1xe) {
+        l1xe->clearDecorations();
+    }
 
     // Here you do everything that needs to be done on every single
     // events, e.g. read input variables, apply cuts, and fill

@@ -24,6 +24,11 @@ class L1EmulationLoop : public EL::Algorithm {
     ToolsRegistry* m_registry;                             //!
     ChainRegistry* m_ch_registry;                          //!
 
+    unsigned int m_nEmTauTools; //!
+    unsigned int m_nJetTools; //!
+    unsigned int m_nMuonTools; //!
+    unsigned int m_nEnergySumTools; //!
+
     // variables that don't get filled at submission time should be
     // protected from being send from the submission node to the worker
     // node (done by the //!)
