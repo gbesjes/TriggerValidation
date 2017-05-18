@@ -203,10 +203,10 @@ EL::StatusCode L1EmulationLoop::execute() {
         if(m_trigDecisionTool->getListOfTriggers(it).size() == 0) {
             ATH_MSG_DEBUG("Chain " << it << " doesn't exist in TDT!");
         } else {
-            //ATH_MSG_INFO("size = " << m_trigDecisionTool->getListOfTriggers(it).size());
-            //auto chain_group = m_trigDecisionTool->getChainGroup(it);
-            //cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
-            //cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
+            ATH_MSG_INFO("size = " << m_trigDecisionTool->getListOfTriggers(it).size());
+            auto chain_group = m_trigDecisionTool->getChainGroup(it);
+            cg_passes_event = chain_group->isPassedBits() & TrigDefs::L1_isPassedBeforePrescale;
+            cg_passes_event_1 = chain_group->isPassedBits() & TrigDefs::L1_isPassedAfterVeto;
         }
 
         if (cg_passes_event or cg_passes_event_1) {
